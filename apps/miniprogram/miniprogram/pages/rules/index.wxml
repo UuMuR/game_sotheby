@@ -1,0 +1,1 @@
+<view class="page rules-page"><view wx:for="{{sections}}" wx:key="id" class="section"><text class="title">{{item.title}}</text><text class="summary">{{item.summary}}</text></view></view>

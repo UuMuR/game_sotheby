@@ -4,7 +4,11 @@
     "pages/home/index",
     "pages/profile/index",
     "pages/lobby/index",
-    "pages/game/index"
+    "pages/game/index",
+    "pages/round-result/index",
+    "pages/final-result/index",
+    "pages/rules/index",
+    "pages/history/index"
   ],
   "window": {
     "navigationBarTitleText": "决战苏富比",

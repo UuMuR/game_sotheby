@@ -1,0 +1,1 @@
+<view class="page final-page"><text class="eyebrow">拍卖落槌</text><text class="title">{{model.winnerNames.join('、')}} 获胜</text><view class="ranking"><view wx:for="{{model.rows}}" wx:key="playerId" class="row {{item.winner ? 'winner' : ''}}"><text>第 {{item.place}} 名 · {{item.nickname}}</text><text>{{item.cashLabel}}</text></view></view><button class="primary">返回首页</button></view>

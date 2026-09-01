@@ -11,11 +11,14 @@ import { BackingGameSessionStore, CommandService, type GameSessionStore } from '
 import { InMemoryConnectionRegistry, type ConnectionRegistry } from './games/connection-registry.ts';
 import { InMemoryRoomLock, type RoomLock } from './games/room-lock.ts';
 import { registerGameSocketRoute } from './games/socket-route.ts';
+import { InMemoryResultStore, ResultService, type ResultStore } from './results/result-service.ts';
+import { registerResultRoutes } from './results/routes.ts';
 
 export interface BuildAppOptions {
   wechatClient: WechatIdentityClient;
   store?: LobbyStore & AuthStore;
   randomCode?: () => string;
+  resultStore?: ResultStore;
   gameRuntime?: {
     gameStore: GameSessionStore;
     roomLock?: RoomLock;
@@ -32,6 +35,7 @@ export function buildApp(options: BuildAppOptions): FastifyInstance {
   const roomService = new RoomService(store, options.randomCode ?? (() => randomSixDigitRoomCode()));
   registerAuthRoutes(app, sessionService, options.wechatClient);
   registerRoomRoutes(app, roomService, sessionService);
+  registerResultRoutes(app, new ResultService(options.resultStore ?? new InMemoryResultStore()), sessionService);
   const gameStore = options.gameRuntime?.gameStore ?? new BackingGameSessionStore(store);
   const connections = options.gameRuntime?.connections ?? new InMemoryConnectionRegistry();
   const roomLock = options.gameRuntime?.roomLock ?? new InMemoryRoomLock();
