@@ -1,0 +1,1 @@
+<view class="market"><view wx:for="{{series}}" wx:key="name" class="market-item"><text>{{item.label}}</text><text>{{item.count}} 件 · {{item.price}} 万</text></view></view>

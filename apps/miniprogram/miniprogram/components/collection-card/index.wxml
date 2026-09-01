@@ -1,0 +1,1 @@
+<view class="card {{card.stolen ? 'stolen' : ''}}"><image mode="aspectFill" src="{{card.imageUrl}}"/><text class="name">{{card.name}}</text><text class="meta">{{card.seriesLabel}} · {{card.rarityLabel}}</text></view>

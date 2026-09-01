@@ -38,7 +38,14 @@ function projectAuction(auction: ActiveAuctionState | null, playerId: string): A
   if ('currentPrice' in auction) view.currentPrice = auction.currentPrice;
   if ('currentBidderId' in auction && auction.currentBidderId !== undefined) view.currentBidderId = auction.currentBidderId;
   if ('expiresAt' in auction && auction.expiresAt !== undefined) view.expiresAt = auction.expiresAt;
+  if (auction.type === 'FIXED_PRICE') {
+    view.phase = auction.phase;
+    if (auction.fixedPrice !== undefined) view.fixedPrice = auction.fixedPrice;
+  }
+  if (auction.type === 'SEQUENTIAL') view.phase = 'BIDDING';
+  if (auction.type === 'JOINT') view.phase = auction.phase;
   if (auction.type === 'SEALED_BID') {
+    view.stolen = auction.stolen;
     view.submittedPlayerIds = Object.keys(auction.bids);
     const ownBid = auction.bids[playerId];
     if (ownBid !== undefined) view.ownBid = ownBid;

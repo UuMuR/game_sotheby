@@ -29,6 +29,9 @@ export interface AuctionView {
   submittedPlayerIds?: readonly string[];
   ownBid?: Money;
   revealedBids?: Readonly<Record<string, Money>>;
+  phase?: 'PRICING' | 'OFFERING' | 'CHOOSING_MODE' | 'INVITING' | 'BIDDING';
+  fixedPrice?: Money;
+  stolen?: boolean;
 }
 
 export interface PlayerGameView {

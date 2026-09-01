@@ -3,7 +3,8 @@
     "pages/login/index",
     "pages/home/index",
     "pages/profile/index",
-    "pages/lobby/index"
+    "pages/lobby/index",
+    "pages/game/index"
   ],
   "window": {
     "navigationBarTitleText": "决战苏富比",

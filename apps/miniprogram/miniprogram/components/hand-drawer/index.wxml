@@ -1,0 +1,1 @@
+<view class="hand"><text>我的手牌 {{cards.length}}</text><scroll-view scroll-x><view wx:for="{{cards}}" wx:key="id" class="hand-card" data-id="{{item.id}}" bindtap="select">{{item.name}}</view></scroll-view></view>

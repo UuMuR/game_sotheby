@@ -1,0 +1,11 @@
+<view class="page game-page" wx:if="{{model}}">
+  <view class="game-status"><text>{{model.roundLabel}}</text><text>房间 {{model.roomId}}</text><text class="connection">{{connectionLabel}}</text></view>
+  <player-strip players="{{model.players}}" host-player-id="{{model.hostPlayerId}}" />
+  <view class="lot-stage">
+    <collection-card wx:for="{{lotCards}}" wx:key="id" card="{{item}}" />
+    <text wx:if="{{!lotCards.length}}" class="waiting-copy">等待主持人选择藏品</text>
+  </view>
+  <bid-panel auction="{{model.auction}}" actions="{{model.actions}}" remaining-seconds="{{model.remainingSeconds}}" bind:action="onAuctionAction" />
+  <market-panel counts="{{model.seriesCounts}}" prices="{{model.cumulativeSeriesPrices}}" />
+  <hand-drawer cards="{{model.self.hand}}" is-host="{{model.self.isHost}}" bind:select="onCardSelect" />
+</view>

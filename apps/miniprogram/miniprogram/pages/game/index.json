@@ -1,0 +1,11 @@
+{
+  "navigationBarTitleText": "拍卖进行中",
+  "usingComponents": {
+    "player-strip": "/components/player-strip/index",
+    "collection-card": "/components/collection-card/index",
+    "hand-drawer": "/components/hand-drawer/index",
+    "bid-panel": "/components/bid-panel/index",
+    "joint-panel": "/components/joint-panel/index",
+    "market-panel": "/components/market-panel/index"
+  }
+}

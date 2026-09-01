@@ -1,0 +1,1 @@
+<scroll-view scroll-x class="players"><view wx:for="{{players}}" wx:key="id" class="player"><image class="avatar" src="{{item.avatarUrl}}"/><text>{{item.nickname}}</text><text wx:if="{{item.isHost}}">主持</text><text wx:if="{{!item.online}}">离线</text></view></scroll-view>
