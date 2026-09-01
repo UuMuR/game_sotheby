@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "simulate": "node --experimental-strip-types src/cli.ts"
   },
   "dependencies": {
     "@sotheby/contracts": "workspace:*",

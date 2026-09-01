@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint .",
-    "verify": "pnpm lint && pnpm typecheck && pnpm test"
+    "verify": "pnpm lint && pnpm typecheck && pnpm test",
+    "simulate": "pnpm --filter @sotheby/test-bots simulate --"
   },
   "devDependencies": {
     "@eslint/js": "latest",
