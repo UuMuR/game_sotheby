@@ -8,6 +8,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "@sotheby/contracts": "workspace:*"
+    "@sotheby/contracts": "workspace:*",
+    "zod": "^4.5.4"
   }
 }
