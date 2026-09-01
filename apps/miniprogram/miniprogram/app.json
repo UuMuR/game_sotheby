@@ -1,0 +1,16 @@
+{
+  "pages": [
+    "pages/login/index",
+    "pages/home/index",
+    "pages/profile/index",
+    "pages/lobby/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "决战苏富比",
+    "navigationBarBackgroundColor": "#171511",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#f6f1e7"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

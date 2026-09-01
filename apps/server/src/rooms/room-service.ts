@@ -77,6 +77,10 @@ export class RoomService {
     private readonly idFactory: () => string = randomUUID,
   ) {}
 
+  findActiveRoom(playerId: string): Room | null {
+    return this.store.findActiveRoomByPlayer(playerId);
+  }
+
   create(owner: PlayerProfile): Room {
     this.assertNotInActiveRoom(owner.id);
     let code = this.randomCode();

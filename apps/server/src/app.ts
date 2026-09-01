@@ -7,7 +7,7 @@ import type { WechatIdentityClient } from './auth/wechat-client.ts';
 import { randomSixDigitRoomCode } from './rooms/room-code.ts';
 import { registerRoomRoutes } from './rooms/routes.ts';
 import { InMemoryLobbyStore, RoomService, type LobbyStore } from './rooms/room-service.ts';
-import { CommandService, InMemoryGameSessionStore, type GameSessionStore } from './games/command-service.ts';
+import { BackingGameSessionStore, CommandService, type GameSessionStore } from './games/command-service.ts';
 import { InMemoryConnectionRegistry, type ConnectionRegistry } from './games/connection-registry.ts';
 import { InMemoryRoomLock, type RoomLock } from './games/room-lock.ts';
 import { registerGameSocketRoute } from './games/socket-route.ts';
@@ -32,7 +32,7 @@ export function buildApp(options: BuildAppOptions): FastifyInstance {
   const roomService = new RoomService(store, options.randomCode ?? (() => randomSixDigitRoomCode()));
   registerAuthRoutes(app, sessionService, options.wechatClient);
   registerRoomRoutes(app, roomService, sessionService);
-  const gameStore = options.gameRuntime?.gameStore ?? new InMemoryGameSessionStore();
+  const gameStore = options.gameRuntime?.gameStore ?? new BackingGameSessionStore(store);
   const connections = options.gameRuntime?.connections ?? new InMemoryConnectionRegistry();
   const roomLock = options.gameRuntime?.roomLock ?? new InMemoryRoomLock();
   const commandService = new CommandService({ gameStore, connections, roomLock });

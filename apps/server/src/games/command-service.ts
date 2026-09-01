@@ -40,6 +40,27 @@ export interface GameSessionStore {
   saveCommandResult(requestId: string, result: CommandResponse): void;
 }
 
+
+export interface GameStateBackingStore {
+  getGame(gameId: string): GameState | null;
+  saveGame(state: GameState): void;
+}
+
+export class BackingGameSessionStore implements GameSessionStore {
+  private readonly results = new Map<string, CommandResponse>();
+
+  constructor(private readonly backing: GameStateBackingStore) {}
+
+  get(gameId: string): GameState | null { return this.backing.getGame(gameId); }
+  save(state: GameState): void { this.backing.saveGame(state); }
+  findCommandResult(requestId: string): CommandResponse | null {
+    return structuredClone(this.results.get(requestId) ?? null);
+  }
+  saveCommandResult(requestId: string, result: CommandResponse): void {
+    if (!this.results.has(requestId)) this.results.set(requestId, structuredClone(result));
+  }
+}
+
 export class InMemoryGameSessionStore implements GameSessionStore {
   private readonly games = new Map<string, GameState>();
   private readonly results = new Map<string, CommandResponse>();

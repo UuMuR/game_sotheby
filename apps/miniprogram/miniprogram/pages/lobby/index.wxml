@@ -1,0 +1,7 @@
+<view class="page lobby-page">
+  <view class="room-code"><text>房间号</text><text class="code">{{room.code}}</text><button size="mini" class="secondary" open-type="share">邀请好友</button></view>
+  <view class="members"><view class="member" wx:for="{{room.players}}" wx:key="id"><image class="avatar" src="{{item.avatarUrl}}"/><text>{{item.nickname}}</text><text class="badge" wx:if="{{item.id === room.ownerPlayerId}}">房主</text><text class="badge" wx:elif="{{item.ready}}">已准备</text></view></view>
+  <button wx:if="{{canToggleReady}}" class="secondary" bindtap="onToggleReady">{{ready ? '取消准备' : '准备'}}</button>
+  <button wx:if="{{canStart}}" class="primary start" bindtap="onStart">开始游戏</button>
+  <button class="secondary" bindtap="onLeave">离开房间</button>
+</view>

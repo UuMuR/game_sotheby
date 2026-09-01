@@ -1,0 +1,4 @@
+{
+  "desc": "站点地图",
+  "rules": [{ "action": "allow", "page": "*" }]
+}

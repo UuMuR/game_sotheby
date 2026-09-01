@@ -16,6 +16,13 @@ function playerOr401(request: FastifyRequest, sessionService: SessionService) {
 }
 
 export function registerRoomRoutes(app: FastifyInstance, roomService: RoomService, sessionService: SessionService): void {
+  app.get('/v1/me/active-game', async (request, reply) => {
+    const player = playerOr401(request, sessionService);
+    if (!player) return reply.code(401).send({ code: 'UNAUTHORIZED' });
+    const room = roomService.findActiveRoom(player.id);
+    return { gameId: room?.status === 'IN_GAME' ? room.gameId : undefined };
+  });
+
   app.post('/v1/rooms', async (request, reply) => {
     const player = playerOr401(request, sessionService);
     if (!player) return reply.code(401).send({ code: 'UNAUTHORIZED' });

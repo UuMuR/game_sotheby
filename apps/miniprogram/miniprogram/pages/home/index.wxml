@@ -1,0 +1,6 @@
+<view class="page home-page">
+  <view class="hero"><text class="eyebrow">PRIVATE AUCTION</text><text class="title">决战苏富比</text><text class="copy">与 3～8 位好友竞拍珍藏，在四轮博弈中积累最多财富。</text></view>
+  <button class="primary action" bindtap="onCreateRoom">创建房间</button>
+  <view class="join"><input maxlength="6" type="number" value="{{joinCode}}" bindinput="onRoomCodeInput" placeholder="输入 6 位房间号"/><button class="secondary" disabled="{{!canJoin}}" bindtap="onJoinRoom">加入</button></view>
+  <view class="links"><text bindtap="onOpenRules">游戏规则</text><text bindtap="onOpenProfile">个人资料与记录</text></view>
+</view>

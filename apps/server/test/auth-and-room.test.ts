@@ -143,3 +143,27 @@ describe('room and account boundaries', () => {
     await app.close();
   });
 });
+
+describe('active game recovery endpoint', () => {
+  it('returns the started game id for a seated player', async () => {
+    const store = new InMemoryLobbyStore();
+    const codes = ['777777'];
+    const app = buildApp({ wechatClient, store, randomCode: () => codes.shift()! });
+    const owner = await login(app, 'resume-owner');
+    const p2 = await login(app, 'resume-p2');
+    const p3 = await login(app, 'resume-p3');
+    const room = (await app.inject({ method: 'POST', url: '/v1/rooms', headers: { authorization: `Bearer ${owner.token}` } })).json<{ id: string; code: string }>();
+    for (const guest of [p2, p3]) {
+      await app.inject({ method: 'POST', url: `/v1/rooms/${room.code}/join`, headers: { authorization: `Bearer ${guest.token}` } });
+      await app.inject({ method: 'POST', url: `/v1/rooms/${room.id}/ready`, headers: { authorization: `Bearer ${guest.token}` }, payload: { ready: true } });
+    }
+    const started = await app.inject({ method: 'POST', url: `/v1/rooms/${room.id}/start`, headers: { authorization: `Bearer ${owner.token}` } });
+    const gameId = started.json<{ gameId: string }>().gameId;
+
+    const active = await app.inject({ method: 'GET', url: '/v1/me/active-game', headers: { authorization: `Bearer ${p2.token}` } });
+    expect(active.statusCode).toBe(200);
+    expect(active.json()).toEqual({ gameId });
+    expect(store.getGame(gameId)).not.toBeNull();
+    await app.close();
+  });
+});

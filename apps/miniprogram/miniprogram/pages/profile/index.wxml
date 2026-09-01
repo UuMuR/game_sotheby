@@ -1,0 +1,6 @@
+<view class="page profile-page">
+  <button class="avatar-button" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar"><image class="avatar" src="{{avatarUrl}}"/></button>
+  <input maxlength="12" value="{{nickname}}" bindinput="onNicknameInput" placeholder="输入游戏昵称"/>
+  <text wx:if="{{error}}" class="error">{{error}}</text>
+  <button class="primary" bindtap="onSave">保存并继续</button>
+</view>

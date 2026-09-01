@@ -1,0 +1,11 @@
+{
+  "description": "决战苏富比微信小程序",
+  "miniprogramRoot": "miniprogram/",
+  "compileType": "miniprogram",
+  "appid": "touristappid",
+  "setting": {
+    "useCompilerPlugins": ["typescript", "less"],
+    "es6": true,
+    "minified": true
+  }
+}
