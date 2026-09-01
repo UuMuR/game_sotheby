@@ -1,6 +1,7 @@
 import type { CardDefinition, Money } from '@sotheby/contracts';
 
 import type { ActiveAuctionState, GameState, PlayerState } from '../model.ts';
+import { areAllHandsEmpty } from '../rounds/end-condition.ts';
 import { nextSeatPlayerId } from '../turns.ts';
 import { settleJointPurchase } from './joint.ts';
 
@@ -41,7 +42,17 @@ function standardSettlement(
   }
   const seriesCounts = { ...state.seriesCounts };
   for (const card of cards) seriesCounts[card.series] += 1;
-  return { state: { ...state, players, seriesCounts, auction: null, hostPlayerId: nextSeatPlayerId(state, nextHostBaseId) }, transfers };
+  const afterPurchase: GameState = { ...state, players, seriesCounts, auction: null };
+  const roundEnded = areAllHandsEmpty(afterPurchase);
+  return {
+    state: {
+      ...afterPurchase,
+      status: roundEnded ? 'ROUND_SETTLEMENT' : state.status,
+      hostPlayerId: roundEnded ? nextHostBaseId : nextSeatPlayerId(state, nextHostBaseId),
+      ...(roundEnded ? { roundEndHostPlayerId: nextHostBaseId } : {}),
+    },
+    transfers,
+  };
 }
 
 export function settleAuctionPurchase(state: GameState, auction: Exclude<ActiveAuctionState, { type: 'JOINT' }>, buyerId: string, price: Money): SettlementResult {

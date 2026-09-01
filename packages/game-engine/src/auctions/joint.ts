@@ -2,6 +2,7 @@ import type { CardDefinition, Money } from '@sotheby/contracts';
 
 import type { CashTransfer, SettlementResult } from './payment.ts';
 import type { GameState, JointPartnerContext, PlayerState } from '../model.ts';
+import { areAllHandsEmpty } from '../rounds/end-condition.ts';
 import { nextSeatPlayerId } from '../turns.ts';
 
 export function splitJointPrice(price: Money): { oldHostShare: Money; newHostShare: Money } {
@@ -64,13 +65,14 @@ export function settleJointPurchase(
   const seriesCounts = { ...state.seriesCounts };
   for (const card of cards) seriesCounts[card.series] += 1;
 
+  const afterPurchase: GameState = { ...state, players, seriesCounts, auction: null };
+  const roundEnded = areAllHandsEmpty(afterPurchase);
   return {
     state: {
-      ...state,
-      players,
-      seriesCounts,
-      auction: null,
-      hostPlayerId: nextSeatPlayerId(state, context.newHostId),
+      ...afterPurchase,
+      status: roundEnded ? 'ROUND_SETTLEMENT' : state.status,
+      hostPlayerId: roundEnded ? context.oldHostId : nextSeatPlayerId(state, context.newHostId),
+      ...(roundEnded ? { roundEndHostPlayerId: context.oldHostId } : {}),
     },
     transfers,
   };

@@ -1,7 +1,9 @@
 import type { Money } from '@sotheby/contracts';
 
 import type { CommandError } from '../commands.ts';
-import type { GameState, SealedBidAuctionState } from '../model.ts';
+import type { GameState, PlayerState, SealedBidAuctionState } from '../model.ts';
+import { areAllHandsEmpty } from '../rounds/end-condition.ts';
+import { nextSeatPlayerId } from '../turns.ts';
 import { settleAuctionPurchase, type SettlementResult } from './payment.ts';
 
 export interface SealedBidResolution extends SettlementResult {
@@ -63,7 +65,7 @@ export function resolveSealedBid(state: GameState, auction: SealedBidAuctionStat
     return { ...result, winnerId, bids };
   }
 
-  const players = { ...state.players };
+  const players = { ...state.players } as Record<string, PlayerState>;
   for (const [playerId, amount] of Object.entries(bids)) {
     const player = players[playerId];
     if (!player) continue;
@@ -75,9 +77,24 @@ export function resolveSealedBid(state: GameState, auction: SealedBidAuctionStat
   }
   const seriesCounts = { ...state.seriesCounts };
   for (const card of auction.cards) seriesCounts[card.series] += 1;
+  const hostBasis =
+    auction.settlement.kind === 'JOINT_PARTNER'
+      ? auction.settlement.oldHostId
+      : auction.settlement.kind === 'JOINT_SELF'
+        ? auction.settlement.oldHostId
+        : auction.settlement.nextHostBaseId;
+  const afterPurchase: GameState = { ...state, players, seriesCounts, auction: null };
+  const roundEnded = areAllHandsEmpty(afterPurchase);
   return {
-    state: { ...state, players, seriesCounts, auction: null, hostPlayerId: state.seatOrder[(state.seatOrder.indexOf(state.hostPlayerId) + 1) % state.seatOrder.length]! },
-    transfers: Object.entries(bids).filter(([id, amount]) => id !== winnerId && amount > 0).map(([id, amount]) => ({ from: id, to: 'BANK', amount })),
+    state: {
+      ...afterPurchase,
+      status: roundEnded ? 'ROUND_SETTLEMENT' : state.status,
+      hostPlayerId: roundEnded ? hostBasis : nextSeatPlayerId(state, hostBasis),
+      ...(roundEnded ? { roundEndHostPlayerId: hostBasis } : {}),
+    },
+    transfers: Object.entries(bids)
+      .filter(([id, amount]) => id !== winnerId && amount > 0)
+      .map(([id, amount]) => ({ from: id, to: 'BANK', amount })),
     winnerId,
     bids,
   };

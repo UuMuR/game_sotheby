@@ -26,6 +26,8 @@ import type {
   JointAuctionState,
   PlayerState,
 } from './model.ts';
+import { advanceAfterSettlement } from './rounds/settlement.ts';
+import { checkRoundEnd } from './rounds/end-condition.ts';
 import { nextEligibleBuyerAfter, nextSeatPlayerId } from './turns.ts';
 
 const SEALED_BID_SECONDS = 30;
@@ -190,6 +192,23 @@ function playCard(
     [host.id]: removeCard(host, card.id),
   };
   const withoutCard = { ...state, players };
+  const endDecision = checkRoundEnd(state, [card]);
+  if (endDecision.ended) {
+    return accept(
+      state,
+      {
+        ...withoutCard,
+        status: 'ROUND_SETTLEMENT',
+        auction: null,
+        discardedCards: [...state.discardedCards, card],
+        roundEndHostPlayerId: host.id,
+      },
+      command.playerId,
+      'ROUND_ENDED',
+      endDecision,
+      now,
+    );
+  }
 
   if (card.auctionType === 'JOINT') {
     const auction: JointAuctionState = {
@@ -264,6 +283,24 @@ function chooseSelfJointCard(
     ...state,
     players: { ...state.players, [host.id]: removeCard(host, card.id) },
   };
+  const endDecision = checkRoundEnd(state, [initialCard, card]);
+  if (endDecision.ended) {
+    return accept(
+      state,
+      {
+        ...withCardRemoved,
+        status: 'ROUND_SETTLEMENT',
+        auction: null,
+        discardedCards: [...state.discardedCards, initialCard, card],
+        hostPlayerId: auction.oldHostId,
+        roundEndHostPlayerId: auction.oldHostId,
+      },
+      command.playerId,
+      'ROUND_ENDED',
+      endDecision,
+      now,
+    );
+  }
   const started = startAuction(
     withCardRemoved,
     [initialCard, card],
@@ -341,6 +378,24 @@ function respondJointInvite(
       hostPlayerId: newHostId,
       players: { ...state.players, [newHostId]: removeCard(player, card.id) },
     };
+    const endDecision = checkRoundEnd(state, [initialCard, card]);
+    if (endDecision.ended) {
+      return accept(
+        state,
+        {
+          ...withPartner,
+          status: 'ROUND_SETTLEMENT',
+          auction: null,
+          discardedCards: [...state.discardedCards, initialCard, card],
+          hostPlayerId: auction.oldHostId,
+          roundEndHostPlayerId: auction.oldHostId,
+        },
+        command.playerId,
+        'ROUND_ENDED',
+        endDecision,
+        now,
+      );
+    }
     const started = startAuction(
       withPartner,
       [initialCard, card],
@@ -415,6 +470,13 @@ export function handleCommand(state: GameState, command: GameCommandInput, now: 
   }
   if (state.players[command.playerId] === undefined) {
     return reject(state, 'PLAYER_NOT_FOUND', 'Player is not seated');
+  }
+
+  if (command.type === 'ADVANCE_AFTER_SETTLEMENT') {
+    if (state.status !== 'ROUND_SETTLEMENT') {
+      return reject(state, 'INVALID_GAME_STATUS', 'Game is not awaiting round advancement');
+    }
+    return accept(state, advanceAfterSettlement(state), command.playerId, 'ROUND_ADVANCED', {}, now);
   }
 
   if (command.type === 'PLAY_CARD') return playCard(state, command, now);

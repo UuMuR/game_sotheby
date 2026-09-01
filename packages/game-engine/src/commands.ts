@@ -19,7 +19,8 @@ export type GameCommandInput =
   | (CommandBase & { type: 'CHOOSE_SELF_JOINT_CARD'; payload: { cardId: string } })
   | (CommandBase & { type: 'INVITE_JOINT_PLAYER'; payload: Record<string, never> })
   | (CommandBase & { type: 'RESPOND_JOINT_INVITE'; payload: { accept: boolean; cardId?: string } })
-  | (CommandBase & { type: 'EXPIRE_AUCTION'; payload: Record<string, never> });
+  | (CommandBase & { type: 'EXPIRE_AUCTION'; payload: Record<string, never> })
+  | (CommandBase & { type: 'ADVANCE_AFTER_SETTLEMENT'; payload: Record<string, never> });
 
 export type CommandErrorCode =
   | 'STALE_STATE'
@@ -36,7 +37,8 @@ export type CommandErrorCode =
   | 'INVALID_INCREMENT'
   | 'INSUFFICIENT_CASH'
   | 'AUCTION_EXPIRED'
-  | 'AUCTION_NOT_EXPIRED';
+  | 'AUCTION_NOT_EXPIRED'
+  | 'INVALID_GAME_STATUS';
 
 export interface CommandError {
   code: CommandErrorCode;

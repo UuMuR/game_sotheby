@@ -111,6 +111,7 @@ export interface GameState {
   cumulativeSeriesPrices: Readonly<Record<CollectionSeries, Money>>;
   stateVersion: number;
   eventSequence: number;
+  roundEndHostPlayerId?: string;
 }
 
 export interface InitializeGameInput {
