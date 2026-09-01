@@ -11,15 +11,21 @@
     "test:watch": "vitest",
     "lint": "eslint .",
     "verify": "pnpm lint && pnpm typecheck && pnpm test",
-    "simulate": "pnpm --filter @sotheby/test-bots simulate --"
+    "simulate": "pnpm --filter @sotheby/test-bots simulate --",
+    "verify:mvp": "node scripts/verify-mvp.mjs",
+    "build:server": "node_modules/.bin/esbuild apps/server/src/server.ts --bundle --platform=node --format=esm --target=node22 --outfile=apps/server/dist/server.js --external:fastify --external:@fastify/websocket --external:ioredis --external:mysql2 --external:mysql2/* --external:drizzle-orm --external:drizzle-orm/* --external:ws --external:zod",
+    "mini:preview": "node scripts/miniprogram-ci.mjs preview",
+    "mini:upload": "node scripts/miniprogram-ci.mjs upload"
   },
   "devDependencies": {
-    "@eslint/js": "latest",
-    "@types/node": "latest",
-    "eslint": "latest",
+    "@eslint/js": "10.0.1",
+    "@types/node": "26.4.0",
+    "eslint": "10.9.1",
+    "esbuild": "0.28.2",
+    "miniprogram-ci": "2.1.31",
     "typescript": "6.0.3",
-    "typescript-eslint": "latest",
-    "vitest": "latest"
+    "typescript-eslint": "8.68.0",
+    "vitest": "4.1.11"
   },
   "type": "module"
 }

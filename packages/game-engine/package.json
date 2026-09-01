@@ -9,6 +9,6 @@
   },
   "dependencies": {
     "@sotheby/contracts": "workspace:*",
-    "zod": "^4.5.4"
+    "zod": "4.5.4"
   }
 }

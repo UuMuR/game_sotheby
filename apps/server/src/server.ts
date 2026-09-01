@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import { Redis } from 'ioredis';
 
 import { buildApp } from './app.ts';
@@ -14,14 +16,17 @@ const app = buildApp({
   gameRuntime: {
     gameStore: new InMemoryGameSessionStore(),
     connections: new InMemoryConnectionRegistry(),
-    roomLock: new RedisRoomLock(redis, crypto.randomUUID),
+    roomLock: new RedisRoomLock(redis, randomUUID),
   },
 });
 
 await redis.connect();
 await app.listen({ host: '0.0.0.0', port: config.PORT });
 
+let shuttingDown = false;
 async function shutdown(): Promise<void> {
+  if (shuttingDown) return;
+  shuttingDown = true;
   await app.close();
   await redis.quit();
 }

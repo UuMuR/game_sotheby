@@ -10,5 +10,6 @@
   "dependencies": {
     "@sotheby/contracts": "workspace:*",
     "@sotheby/game-engine": "workspace:*"
-  }
+  },
+  "exports": "./src/index.ts"
 }
