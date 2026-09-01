@@ -15,6 +15,10 @@ export type GameCommandInput =
   | (CommandBase & { type: 'RESPOND_FIXED_PRICE'; payload: { accept: boolean } })
   | (CommandBase & { type: 'PLACE_SEQUENTIAL_BID'; payload: { amount: Money } })
   | (CommandBase & { type: 'PASS_SEQUENTIAL'; payload: Record<string, never> })
+  | (CommandBase & { type: 'SUBMIT_SEALED_BID'; payload: { amount: Money } })
+  | (CommandBase & { type: 'CHOOSE_SELF_JOINT_CARD'; payload: { cardId: string } })
+  | (CommandBase & { type: 'INVITE_JOINT_PLAYER'; payload: Record<string, never> })
+  | (CommandBase & { type: 'RESPOND_JOINT_INVITE'; payload: { accept: boolean; cardId?: string } })
   | (CommandBase & { type: 'EXPIRE_AUCTION'; payload: Record<string, never> });
 
 export type CommandErrorCode =
@@ -22,6 +26,7 @@ export type CommandErrorCode =
   | 'PLAYER_NOT_FOUND'
   | 'NOT_HOST'
   | 'CARD_NOT_FOUND'
+  | 'INVALID_JOINT_CARD'
   | 'AUCTION_ACTIVE'
   | 'NO_ACTIVE_AUCTION'
   | 'WRONG_AUCTION_TYPE'

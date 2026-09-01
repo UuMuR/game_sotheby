@@ -2,7 +2,7 @@ import type { Money } from '@sotheby/contracts';
 
 import type { CommandError, Deadline } from '../commands.ts';
 import type { GameState, OpenAuctionState } from '../model.ts';
-import { settleStandardPurchase, type SettlementResult } from './payment.ts';
+import { settleAuctionPurchase, type SettlementResult } from './payment.ts';
 
 export const OPEN_AUCTION_SECONDS = 30;
 
@@ -45,11 +45,10 @@ export function expireOpenAuction(state: GameState, auction: OpenAuctionState, n
   if (now.getTime() < Date.parse(auction.expiresAt)) {
     return { code: 'AUCTION_NOT_EXPIRED', message: 'The auction is still active' };
   }
-  return settleStandardPurchase(
+  return settleAuctionPurchase(
     state,
-    state.hostPlayerId,
+    auction,
     auction.currentBidderId ?? state.hostPlayerId,
     auction.currentBidderId === undefined ? 0 : auction.currentPrice,
-    auction.cards,
   );
 }

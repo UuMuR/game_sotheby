@@ -19,9 +19,29 @@ export interface PlayerState extends PlayerIdentity {
   purchasedCards: readonly CardDefinition[];
 }
 
+export interface StandardSettlementContext {
+  kind: 'STANDARD';
+  sellerId: string;
+  nextHostBaseId: string;
+}
+
+export interface JointSelfContext {
+  kind: 'JOINT_SELF';
+  oldHostId: string;
+}
+
+export interface JointPartnerContext {
+  kind: 'JOINT_PARTNER';
+  oldHostId: string;
+  newHostId: string;
+}
+
+export type AuctionSettlementContext = StandardSettlementContext | JointSelfContext | JointPartnerContext;
+
 export interface OpenAuctionState {
   type: 'OPEN';
   cards: readonly CardDefinition[];
+  settlement: AuctionSettlementContext;
   currentPrice: Money;
   currentBidderId?: string;
   expiresAt: string;
@@ -30,6 +50,7 @@ export interface OpenAuctionState {
 export interface FixedPriceAuctionState {
   type: 'FIXED_PRICE';
   cards: readonly CardDefinition[];
+  settlement: AuctionSettlementContext;
   phase: 'PRICING' | 'OFFERING';
   fixedPrice?: Money;
   actingPlayerId: string;
@@ -39,6 +60,7 @@ export interface FixedPriceAuctionState {
 export interface SequentialAuctionState {
   type: 'SEQUENTIAL';
   cards: readonly CardDefinition[];
+  settlement: AuctionSettlementContext;
   currentPrice: Money;
   currentBidderId?: string;
   actingPlayerId: string;
@@ -49,6 +71,8 @@ export interface SequentialAuctionState {
 export interface SealedBidAuctionState {
   type: 'SEALED_BID';
   cards: readonly CardDefinition[];
+  settlement: AuctionSettlementContext;
+  stolen: boolean;
   bids: Readonly<Record<string, Money>>;
   expiresAt: string;
   revealed: boolean;
@@ -57,7 +81,10 @@ export interface SealedBidAuctionState {
 export interface JointAuctionState {
   type: 'JOINT';
   cards: readonly CardDefinition[];
-  actingPlayerId?: string;
+  oldHostId: string;
+  phase: 'CHOOSING_MODE' | 'INVITING';
+  actingPlayerId: string;
+  invitedPlayerIds: readonly string[];
   expiresAt?: string;
 }
 

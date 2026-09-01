@@ -3,7 +3,7 @@ import type { Money } from '@sotheby/contracts';
 import type { CommandError, Deadline } from '../commands.ts';
 import type { GameState, SequentialAuctionState } from '../model.ts';
 import { nextSequentialActor } from '../turns.ts';
-import { settleStandardPurchase, type SettlementResult } from './payment.ts';
+import { settleAuctionPurchase, type SettlementResult } from './payment.ts';
 
 const TURN_SECONDS = 30;
 
@@ -43,23 +43,21 @@ export function actSequential(
 
   const actedPlayerIds = [...auction.actedPlayerIds, playerId];
   if (playerId === state.hostPlayerId) {
-    return settleStandardPurchase(
+    return settleAuctionPurchase(
       state,
-      state.hostPlayerId,
+      auction,
       currentBidderId ?? state.hostPlayerId,
       currentBidderId === undefined ? 0 : currentPrice,
-      auction.cards,
     );
   }
 
   const next = nextSequentialActor(state, playerId, actedPlayerIds);
   if (next === null) {
-    return settleStandardPurchase(
+    return settleAuctionPurchase(
       state,
-      state.hostPlayerId,
+      auction,
       currentBidderId ?? state.hostPlayerId,
       currentBidderId === undefined ? 0 : currentPrice,
-      auction.cards,
     );
   }
   const expiresAt = new Date(now.getTime() + TURN_SECONDS * 1000).toISOString();

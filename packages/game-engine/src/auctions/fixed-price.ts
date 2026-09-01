@@ -3,7 +3,7 @@ import type { Money } from '@sotheby/contracts';
 import type { CommandError, Deadline } from '../commands.ts';
 import type { FixedPriceAuctionState, GameState } from '../model.ts';
 import { nextEligibleBuyerAfter } from '../turns.ts';
-import { settleStandardPurchase, type SettlementResult } from './payment.ts';
+import { settleAuctionPurchase, type SettlementResult } from './payment.ts';
 
 const PRICE_SECONDS = 60;
 const RESPONSE_SECONDS = 30;
@@ -49,7 +49,7 @@ export function beginOffers(
   now: Date,
 ): { auction: FixedPriceAuctionState; deadline?: Deadline } | SettlementResult {
   const next = nextEligibleBuyerAfter(state, state.hostPlayerId, state.hostPlayerId);
-  if (next === null) return settleStandardPurchase(state, state.hostPlayerId, state.hostPlayerId, amount, auction.cards);
+  if (next === null) return settleAuctionPurchase(state, auction, state.hostPlayerId, amount);
   const expiresAt = new Date(now.getTime() + RESPONSE_SECONDS * 1000).toISOString();
   return {
     auction: { ...auction, phase: 'OFFERING', fixedPrice: amount, actingPlayerId: next, expiresAt },
@@ -69,10 +69,10 @@ export function respondFixedPrice(
   }
   if (now.getTime() >= Date.parse(auction.expiresAt)) return { code: 'AUCTION_EXPIRED', message: 'Decision expired' };
   const price = auction.fixedPrice ?? 0;
-  if (accept) return settleStandardPurchase(state, state.hostPlayerId, playerId, price, auction.cards);
+  if (accept) return settleAuctionPurchase(state, auction, playerId, price);
 
   const next = nextEligibleBuyerAfter(state, playerId, state.hostPlayerId);
-  if (next === null) return settleStandardPurchase(state, state.hostPlayerId, state.hostPlayerId, price, auction.cards);
+  if (next === null) return settleAuctionPurchase(state, auction, state.hostPlayerId, price);
   const expiresAt = new Date(now.getTime() + RESPONSE_SECONDS * 1000).toISOString();
   return {
     auction: { ...auction, actingPlayerId: next, expiresAt },
