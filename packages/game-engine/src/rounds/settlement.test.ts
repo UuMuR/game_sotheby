@@ -240,3 +240,19 @@ describe('host rotation with depleted hands', () => {
     expect(result.state.hostPlayerId).toBe('p3');
   });
 });
+
+describe('game status command guard', () => {
+  it('rejects auction commands while settlement is being displayed', () => {
+    const state = { ...baseState(), status: 'ROUND_SETTLEMENT' as const, lastRoundSettlement: { round: 1 as const, rankings: [], ledger: [] } };
+    const cardId = state.players[state.hostPlayerId]?.hand[0]?.id ?? '';
+    const result = handleCommand(state, command(state, state.hostPlayerId, 'PLAY_CARD', { cardId }), NOW);
+    expect(result).toMatchObject({ ok: false, error: { code: 'INVALID_GAME_STATUS' } });
+  });
+
+  it('rejects every command after the game is finished', () => {
+    const state = { ...baseState(), status: 'FINISHED' as const, finalStandings: [] };
+    const cardId = state.players[state.hostPlayerId]?.hand[0]?.id ?? '';
+    const result = handleCommand(state, command(state, state.hostPlayerId, 'PLAY_CARD', { cardId }), NOW);
+    expect(result).toMatchObject({ ok: false, error: { code: 'INVALID_GAME_STATUS' } });
+  });
+});

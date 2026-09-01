@@ -477,6 +477,13 @@ export function handleCommand(state: GameState, command: GameCommandInput, now: 
     return reject(state, 'PLAYER_NOT_FOUND', 'Player is not seated');
   }
 
+  if (state.status === 'FINISHED') {
+    return reject(state, 'INVALID_GAME_STATUS', 'The game has already finished');
+  }
+  if (state.status === 'ROUND_SETTLEMENT' && command.type !== 'ADVANCE_AFTER_SETTLEMENT') {
+    return reject(state, 'INVALID_GAME_STATUS', 'The round settlement must be advanced first');
+  }
+
   if (command.type === 'ADVANCE_AFTER_SETTLEMENT') {
     if (state.status !== 'ROUND_SETTLEMENT') {
       return reject(state, 'INVALID_GAME_STATUS', 'Game is not awaiting round advancement');
