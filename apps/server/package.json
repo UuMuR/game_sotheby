@@ -8,6 +8,8 @@
   },
   "dependencies": {
     "@sotheby/contracts": "workspace:*",
-    "@sotheby/game-engine": "workspace:*"
+    "@sotheby/game-engine": "workspace:*",
+    "drizzle-orm": "^0.45.2",
+    "mysql2": "^3.24.2"
   }
 }
