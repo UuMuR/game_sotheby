@@ -3,7 +3,7 @@ import type { Money } from '@sotheby/contracts';
 import type { CommandError } from '../commands.ts';
 import type { GameState, PlayerState, SealedBidAuctionState } from '../model.ts';
 import { areAllHandsEmpty } from '../rounds/end-condition.ts';
-import { nextSeatPlayerId } from '../turns.ts';
+import { nextPlayerWithCards } from '../turns.ts';
 import { settleAuctionPurchase, type SettlementResult } from './payment.ts';
 
 export interface SealedBidResolution extends SettlementResult {
@@ -89,7 +89,7 @@ export function resolveSealedBid(state: GameState, auction: SealedBidAuctionStat
     state: {
       ...afterPurchase,
       status: roundEnded ? 'ROUND_SETTLEMENT' : state.status,
-      hostPlayerId: roundEnded ? hostBasis : nextSeatPlayerId(state, hostBasis),
+      hostPlayerId: roundEnded ? hostBasis : nextPlayerWithCards(afterPurchase, hostBasis) ?? hostBasis,
       ...(roundEnded ? { roundEndHostPlayerId: hostBasis } : {}),
     },
     transfers: Object.entries(bids)

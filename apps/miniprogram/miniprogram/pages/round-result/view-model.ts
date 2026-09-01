@@ -1,3 +1,7 @@
+import type { PlayerGameView } from '@sotheby/contracts';
+
+import { CARD_BY_ID } from '../../data/cards.ts';
+
 export interface RoundResultInput {
   round: 1 | 2 | 3 | 4;
   rankings: readonly {
@@ -35,5 +39,26 @@ export function createRoundResultModel(input: RoundResultInput) {
       afterLabel: moneyLabel(entry.after),
     })),
     balanceLabel: moneyLabel(input.balance),
+  };
+}
+
+
+export function roundResultInputFromGameView(view: PlayerGameView): RoundResultInput {
+  const settlement = view.lastRoundSettlement;
+  if (!settlement) throw new Error('ROUND_SETTLEMENT_MISSING');
+  return {
+    round: settlement.round,
+    rankings: settlement.rankings.map((ranking) => ({
+      ...ranking,
+      cumulativePrice: view.cumulativeSeriesPrices[ranking.series],
+    })),
+    ledger: settlement.ledger.map((entry) => ({
+      reason: entry.reason,
+      cardName: CARD_BY_ID.get(entry.cardId)?.name ?? entry.cardId,
+      delta: entry.delta,
+      before: entry.before,
+      after: entry.after,
+    })),
+    balance: view.self.cash,
   };
 }

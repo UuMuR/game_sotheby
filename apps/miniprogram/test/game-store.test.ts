@@ -6,7 +6,7 @@ import { createGameStore } from '../miniprogram/store/game-store.ts';
 
 function view(version: number): PlayerGameView {
   return {
-    roomId: 'room-1', gameId: 'game-1', stateVersion: version, eventSequence: version,
+    roomId: 'room-1', gameId: 'game-1', status: 'IN_PROGRESS', stateVersion: version, eventSequence: version,
     round: 1, hostPlayerId: 'p1',
     self: { id: 'p1', nickname: 'P1', avatarUrl: '/1.png', seat: 0, online: true, isHost: true, isActing: false, purchasedCards: [], handCount: 1, cash: 100, hand: [] },
     players: [], seriesCounts: { BLACK: 0, BLUE: 0, GREEN: 0, YELLOW: 0, RED: 0 },
@@ -64,5 +64,17 @@ describe('game socket lifecycle', () => {
       { type: 'SYNC_STATE' },
       { type: 'SYNC_STATE' },
     ]);
+  });
+});
+
+describe('game-state navigation', () => {
+  it('routes settlement and finished states to their result pages', async () => {
+    const routes: string[] = [];
+    const { routeForGameState } = await import('../miniprogram/pages/game/navigation.ts');
+    expect(routeForGameState({ ...view(5), status: 'ROUND_SETTLEMENT' })).toBe('/pages/round-result/index?gameId=game-1');
+    expect(routeForGameState({ ...view(6), status: 'FINISHED' })).toBe('/pages/final-result/index?gameId=game-1');
+    const route = routeForGameState({ ...view(7), status: 'IN_PROGRESS' });
+    if (route) routes.push(route);
+    expect(routes).toEqual([]);
   });
 });

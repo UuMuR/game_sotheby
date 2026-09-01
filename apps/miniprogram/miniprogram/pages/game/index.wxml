@@ -7,5 +7,5 @@
   </view>
   <bid-panel auction="{{model.auction}}" actions="{{model.actions}}" remaining-seconds="{{model.remainingSeconds}}" bind:action="onAuctionAction" />
   <market-panel counts="{{model.seriesCounts}}" prices="{{model.cumulativeSeriesPrices}}" />
-  <hand-drawer cards="{{model.self.hand}}" is-host="{{model.self.isHost}}" bind:select="onCardSelect" />
+  <hand-drawer cards="{{model.handCards}}" bind:select="onCardSelect" />
 </view>

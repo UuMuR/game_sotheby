@@ -26,7 +26,7 @@ import type {
   JointAuctionState,
   PlayerState,
 } from './model.ts';
-import { advanceAfterSettlement } from './rounds/settlement.ts';
+import { advanceAfterSettlement, settleRound } from './rounds/settlement.ts';
 import { checkRoundEnd } from './rounds/end-condition.ts';
 import { nextEligibleBuyerAfter, nextSeatPlayerId } from './turns.ts';
 
@@ -173,6 +173,22 @@ function removeCard(player: PlayerState, cardId: string): PlayerState {
   return { ...player, hand: player.hand.filter((card) => card.id !== cardId) };
 }
 
+function enterRoundSettlement(state: GameState, hostPlayerId: string): GameState {
+  return settleRound({
+    ...state,
+    status: 'ROUND_SETTLEMENT',
+    auction: null,
+    hostPlayerId,
+    roundEndHostPlayerId: hostPlayerId,
+  }).state;
+}
+
+function finalizeAuctionState(state: GameState): GameState {
+  return state.status === 'ROUND_SETTLEMENT'
+    ? settleRound(state).state
+    : state;
+}
+
 function playCard(
   state: GameState,
   command: Extract<GameCommandInput, { type: 'PLAY_CARD' }>,
@@ -196,13 +212,10 @@ function playCard(
   if (endDecision.ended) {
     return accept(
       state,
-      {
-        ...withoutCard,
-        status: 'ROUND_SETTLEMENT',
-        auction: null,
-        discardedCards: [...state.discardedCards, card],
-        roundEndHostPlayerId: host.id,
-      },
+      enterRoundSettlement(
+        { ...withoutCard, discardedCards: [...state.discardedCards, card] },
+        host.id,
+      ),
       command.playerId,
       'ROUND_ENDED',
       endDecision,
@@ -287,14 +300,10 @@ function chooseSelfJointCard(
   if (endDecision.ended) {
     return accept(
       state,
-      {
-        ...withCardRemoved,
-        status: 'ROUND_SETTLEMENT',
-        auction: null,
-        discardedCards: [...state.discardedCards, initialCard, card],
-        hostPlayerId: auction.oldHostId,
-        roundEndHostPlayerId: auction.oldHostId,
-      },
+      enterRoundSettlement(
+        { ...withCardRemoved, discardedCards: [...state.discardedCards, initialCard, card] },
+        auction.oldHostId,
+      ),
       command.playerId,
       'ROUND_ENDED',
       endDecision,
@@ -382,14 +391,10 @@ function respondJointInvite(
     if (endDecision.ended) {
       return accept(
         state,
-        {
-          ...withPartner,
-          status: 'ROUND_SETTLEMENT',
-          auction: null,
-          discardedCards: [...state.discardedCards, initialCard, card],
-          hostPlayerId: auction.oldHostId,
-          roundEndHostPlayerId: auction.oldHostId,
-        },
+        enterRoundSettlement(
+          { ...withPartner, discardedCards: [...state.discardedCards, initialCard, card] },
+          auction.oldHostId,
+        ),
         command.playerId,
         'ROUND_ENDED',
         endDecision,
@@ -516,7 +521,7 @@ export function handleCommand(state: GameState, command: GameCommandInput, now: 
     if ('state' in outcome) {
       return accept(
         state,
-        outcome.state,
+        finalizeAuctionState(outcome.state),
         command.playerId,
         'AUCTION_SETTLED',
         settlementPayload(outcome, { price: command.payload.amount }),
@@ -542,7 +547,7 @@ export function handleCommand(state: GameState, command: GameCommandInput, now: 
     if ('state' in outcome) {
       return accept(
         state,
-        outcome.state,
+        finalizeAuctionState(outcome.state),
         command.playerId,
         'AUCTION_SETTLED',
         settlementPayload(outcome, { accepted: command.payload.accept }),
@@ -569,7 +574,7 @@ export function handleCommand(state: GameState, command: GameCommandInput, now: 
     if ('state' in outcome) {
       return accept(
         state,
-        outcome.state,
+        finalizeAuctionState(outcome.state),
         command.playerId,
         'AUCTION_SETTLED',
         settlementPayload(outcome, { amount }),
@@ -621,13 +626,13 @@ export function handleCommand(state: GameState, command: GameCommandInput, now: 
     if (state.auction.type === 'OPEN') {
       const outcome = expireOpenAuction(state, state.auction, now);
       if ('code' in outcome) return reject(state, outcome.code, outcome.message);
-      return accept(state, outcome.state, command.playerId, 'AUCTION_SETTLED', settlementPayload(outcome), now);
+      return accept(state, finalizeAuctionState(outcome.state), command.playerId, 'AUCTION_SETTLED', settlementPayload(outcome), now);
     }
     if (state.auction.type === 'FIXED_PRICE') {
       if (state.auction.phase === 'PRICING') {
         const outcome = beginOffers(state, state.auction, 0, now);
         if ('state' in outcome) {
-          return accept(state, outcome.state, null, 'AUCTION_SETTLED', settlementPayload(outcome, { price: 0 }), now);
+          return accept(state, finalizeAuctionState(outcome.state), null, 'AUCTION_SETTLED', settlementPayload(outcome, { price: 0 }), now);
         }
         return accept(
           state,
@@ -649,7 +654,7 @@ export function handleCommand(state: GameState, command: GameCommandInput, now: 
       );
       if ('code' in outcome) return reject(state, outcome.code, outcome.message);
       if ('state' in outcome) {
-        return accept(state, outcome.state, null, 'AUCTION_SETTLED', settlementPayload(outcome, { timedOut: true }), now);
+        return accept(state, finalizeAuctionState(outcome.state), null, 'AUCTION_SETTLED', settlementPayload(outcome, { timedOut: true }), now);
       }
       return accept(
         state,
@@ -671,7 +676,7 @@ export function handleCommand(state: GameState, command: GameCommandInput, now: 
       );
       if ('code' in outcome) return reject(state, outcome.code, outcome.message);
       if ('state' in outcome) {
-        return accept(state, outcome.state, null, 'AUCTION_SETTLED', settlementPayload(outcome, { timedOut: true }), now);
+        return accept(state, finalizeAuctionState(outcome.state), null, 'AUCTION_SETTLED', settlementPayload(outcome, { timedOut: true }), now);
       }
       return accept(
         state,
@@ -687,7 +692,7 @@ export function handleCommand(state: GameState, command: GameCommandInput, now: 
       const outcome = resolveSealedBid(state, state.auction);
       return accept(
         state,
-        outcome.state,
+        finalizeAuctionState(outcome.state),
         null,
         'AUCTION_SETTLED',
         settlementPayload(outcome, { winnerId: outcome.winnerId, bids: outcome.bids }),

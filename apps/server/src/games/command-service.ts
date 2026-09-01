@@ -8,6 +8,9 @@ import {
 import { GameBroadcaster } from './broadcaster.ts';
 import type { ConnectionRegistry } from './connection-registry.ts';
 import type { RoomLock } from './room-lock.ts';
+import type { DeadlineStore } from './deadline-store.ts';
+import type { ResultStore } from '../results/result-service.ts';
+import { ResultService } from '../results/result-service.ts';
 
 export interface ClientCommandEnvelope {
   type: 'COMMAND';
@@ -82,6 +85,10 @@ export class CommandService {
       gameStore: GameSessionStore;
       roomLock: RoomLock;
       connections: ConnectionRegistry;
+      resultStore?: ResultStore;
+      roomCodeFor?: (roomId: string) => string;
+      deadlineStore?: DeadlineStore;
+      onGameFinished?: (state: GameState) => void | Promise<void>;
     },
   ) {
     this.broadcaster = new GameBroadcaster(dependencies.connections);
@@ -113,6 +120,21 @@ export class CommandService {
       let response: CommandResponse;
       if (result.ok) {
         this.dependencies.gameStore.save(result.state);
+        if (this.dependencies.deadlineStore) {
+          for (const scheduledDeadline of result.scheduledDeadlines) {
+            await this.dependencies.deadlineStore.schedule(scheduledDeadline);
+          }
+        }
+        if (result.state.status === 'FINISHED' && this.dependencies.resultStore) {
+          new ResultService(this.dependencies.resultStore).saveFinishedGame(
+            result.state,
+            this.dependencies.roomCodeFor?.(result.state.roomId) ?? result.state.roomId,
+            now,
+          );
+        }
+        if (result.state.status === 'FINISHED') {
+          await this.dependencies.onGameFinished?.(result.state);
+        }
         response = {
           type: 'COMMAND_ACCEPTED',
           requestId: envelope.requestId,

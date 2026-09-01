@@ -17,6 +17,7 @@ declare const wx: {
   removeStorageSync(key: string): void;
   navigateTo(options: { url: string }): void;
   redirectTo(options: { url: string }): void;
+  reLaunch(options: { url: string }): void;
   showToast(options: { title: string; icon?: 'success' | 'error' | 'none' }): void;
   connectSocket(options: { url: string }): {
     send(options: { data: string }): void;

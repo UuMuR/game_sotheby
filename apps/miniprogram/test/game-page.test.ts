@@ -7,7 +7,7 @@ import { createGamePageModel, remainingSeconds } from '../miniprogram/pages/game
 
 function view(cash = 50): PlayerGameView {
   return {
-    roomId: 'room-1', gameId: 'game-1', stateVersion: 2, eventSequence: 1,
+    roomId: 'room-1', gameId: 'game-1', status: 'IN_PROGRESS', stateVersion: 2, eventSequence: 1,
     round: 2, hostPlayerId: 'p1',
     self: { id: 'p2', nickname: 'P2', avatarUrl: '/2.png', seat: 1, online: true, isHost: false, isActing: false, purchasedCards: [], handCount: 1, cash, hand: [] },
     players: [
@@ -85,5 +85,26 @@ describe('auction action models', () => {
       ...view(), auction: { type: 'JOINT', cardIds: ['BL-010'], phase: 'INVITING', actingPlayerId: 'p2', expiresAt: '2026-09-01T08:00:30.000Z' },
     }, new Date('2026-09-01T08:00:10.000Z'));
     expect(invited.actions.map((action) => action.type)).toEqual(['ACCEPT_JOINT_INVITE', 'DECLINE_JOINT_INVITE']);
+  });
+});
+
+describe('game page card and command mapping', () => {
+  it('resolves current lot ids to display cards and maps fixed-price actions', async () => {
+    const { createVisibleCards } = await import('../miniprogram/pages/game/view-model.ts');
+    const cards = createVisibleCards(['BL-001']);
+    expect(cards[0]).toMatchObject({ id: 'BL-001', imageUrl: '/assets/placeholders/blue.svg', seriesLabel: '蓝色', rarityLabel: '★' });
+
+    const { actionToCommand } = await import('../miniprogram/pages/game/actions.ts');
+    expect(actionToCommand({ type: 'ACCEPT_FIXED_PRICE' }, {})).toEqual({ type: 'RESPOND_FIXED_PRICE', payload: { accept: true } });
+    expect(actionToCommand({ type: 'PLACE_OPEN_BID', minimumAmount: 11 }, { amount: 15 })).toEqual({ type: 'PLACE_OPEN_BID', payload: { amount: 15 } });
+  });
+});
+
+describe('hand selection command routing', () => {
+  it('uses the current joint phase to choose the right command', async () => {
+    const { commandForCardSelection } = await import('../miniprogram/pages/game/actions.ts');
+    expect(commandForCardSelection({ type: 'JOINT', cardIds: ['BL-010'], phase: 'CHOOSING_MODE', actingPlayerId: 'p1' }, 'BL-001')).toEqual({ type: 'CHOOSE_SELF_JOINT_CARD', payload: { cardId: 'BL-001' } });
+    expect(commandForCardSelection({ type: 'JOINT', cardIds: ['BL-010'], phase: 'INVITING', actingPlayerId: 'p2' }, 'BL-001')).toEqual({ type: 'RESPOND_JOINT_INVITE', payload: { accept: true, cardId: 'BL-001' } });
+    expect(commandForCardSelection(null, 'BL-001')).toEqual({ type: 'PLAY_CARD', payload: { cardId: 'BL-001' } });
   });
 });

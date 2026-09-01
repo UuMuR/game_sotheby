@@ -43,3 +43,59 @@ describe('result APIs', () => {
     await app.close();
   });
 });
+
+describe('automatic result capture', () => {
+  it('stores a finished game result after the final advance command', async () => {
+    const results = new InMemoryResultStore();
+    const { CommandService, InMemoryGameSessionStore } = await import('../src/games/command-service.ts');
+    const { InMemoryConnectionRegistry } = await import('../src/games/connection-registry.ts');
+    const { InMemoryRoomLock } = await import('../src/games/room-lock.ts');
+    const { initializeGame, loadPlaceholderCatalog } = await import('@sotheby/game-engine');
+    const state = initializeGame({
+      roomId: 'room-finish', gameId: 'game-finish', catalog: loadPlaceholderCatalog(),
+      randomSource: { next: () => 0, integer: () => 0, shuffle: (values) => [...values] },
+      players: ['p1','p2','p3'].map((id) => ({ id, nickname: id, avatarUrl: `/${id}.png` })),
+    });
+    const games = new InMemoryGameSessionStore();
+    games.seed({ ...state, round: 4, status: 'ROUND_SETTLEMENT', lastRoundSettlement: { round: 4, rankings: [], ledger: [] } });
+    const service = new CommandService({ gameStore: games, roomLock: new InMemoryRoomLock(), connections: new InMemoryConnectionRegistry(), resultStore: results, roomCodeFor: () => '999999' });
+
+    const response = await service.execute({ type: 'COMMAND', requestId: 'finish-once', roomId: 'room-finish', gameId: 'game-finish', playerId: 'p1', stateVersion: 1, command: { type: 'ADVANCE_AFTER_SETTLEMENT', payload: {} } }, new Date('2026-09-01T12:00:00.000Z'));
+
+    expect(response.type).toBe('COMMAND_ACCEPTED');
+    expect(results.get('game-finish')?.finalStandings).toHaveLength(3);
+    expect(results.get('game-finish')?.roomCode).toBe('999999');
+  });
+});
+
+describe('room lifecycle after final result', () => {
+  it('invokes the finish hook once when the final round advances', async () => {
+    const results = new InMemoryResultStore();
+    const { CommandService, InMemoryGameSessionStore } = await import('../src/games/command-service.ts');
+    const { InMemoryConnectionRegistry } = await import('../src/games/connection-registry.ts');
+    const { InMemoryRoomLock } = await import('../src/games/room-lock.ts');
+    const { initializeGame, loadPlaceholderCatalog } = await import('@sotheby/game-engine');
+    const state = initializeGame({
+      roomId: 'room-finish-hook', gameId: 'game-finish-hook', catalog: loadPlaceholderCatalog(),
+      randomSource: { next: () => 0, integer: () => 0, shuffle: (values) => [...values] },
+      players: ['p1','p2','p3'].map((id) => ({ id, nickname: id, avatarUrl: `/${id}.png` })),
+    });
+    const games = new InMemoryGameSessionStore();
+    games.seed({ ...state, round: 4, status: 'ROUND_SETTLEMENT', lastRoundSettlement: { round: 4, rankings: [], ledger: [] } });
+    const finishedRooms: string[] = [];
+    const service = new CommandService({
+      gameStore: games,
+      roomLock: new InMemoryRoomLock(),
+      connections: new InMemoryConnectionRegistry(),
+      resultStore: results,
+      roomCodeFor: () => '999998',
+      onGameFinished: (finished) => { finishedRooms.push(finished.roomId); },
+    });
+    const envelope = { type: 'COMMAND' as const, requestId: 'finish-hook', roomId: state.roomId, gameId: state.gameId, playerId: 'p1', stateVersion: 1, command: { type: 'ADVANCE_AFTER_SETTLEMENT' as const, payload: {} } };
+
+    await service.execute(envelope, new Date('2026-09-01T12:00:00.000Z'));
+    await service.execute(envelope, new Date('2026-09-01T12:00:01.000Z'));
+
+    expect(finishedRooms).toEqual(['room-finish-hook']);
+  });
+});

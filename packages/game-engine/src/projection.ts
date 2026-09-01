@@ -63,6 +63,7 @@ export function projectForPlayer(state: GameState, playerId: string): PlayerGame
   return {
     roomId: state.roomId,
     gameId: state.gameId,
+    status: state.status,
     stateVersion: state.stateVersion,
     eventSequence: state.eventSequence,
     round: state.round,
@@ -78,5 +79,14 @@ export function projectForPlayer(state: GameState, playerId: string): PlayerGame
     seriesCounts: state.seriesCounts,
     cumulativeSeriesPrices: state.cumulativeSeriesPrices,
     auction: projectAuction(state.auction, playerId),
+    ...(state.lastRoundSettlement === undefined
+      ? {}
+      : {
+          lastRoundSettlement: {
+            ...state.lastRoundSettlement,
+            ledger: state.lastRoundSettlement.ledger.filter((entry) => entry.playerId === playerId),
+          },
+        }),
+    ...(state.finalStandings === undefined ? {} : { finalStandings: state.finalStandings }),
   };
 }

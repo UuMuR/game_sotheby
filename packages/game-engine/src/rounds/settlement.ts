@@ -2,6 +2,7 @@ import type { Money } from '@sotheby/contracts';
 
 import type { GameState, PlayerState, RoundNumber } from '../model.ts';
 import { nextSeatPlayerId } from '../turns.ts';
+import { rankPlayers, type FinalStanding } from '../game-result.ts';
 import { rankSeries, type RankedSeries } from './ranking.ts';
 import { refillForRound } from './refill.ts';
 
@@ -41,6 +42,14 @@ export function settleRound(state: GameState): RoundSettlement {
     throw new Error('Round can only be settled from ROUND_SETTLEMENT state');
   }
 
+  if (state.lastRoundSettlement?.round === state.round) {
+    return {
+      state,
+      rankings: state.lastRoundSettlement.rankings,
+      ledger: state.lastRoundSettlement.ledger,
+    };
+  }
+
   const rankings = rankSeries(state.seriesCounts);
   const cumulativeSeriesPrices = { ...state.cumulativeSeriesPrices };
   for (const ranking of rankings) {
@@ -76,6 +85,7 @@ export function settleRound(state: GameState): RoundSettlement {
     players[playerId] = { ...player, cash, purchasedCards: [] };
   }
 
+  const snapshot = { round: state.round, rankings, ledger };
   return {
     state: {
       ...state,
@@ -83,6 +93,7 @@ export function settleRound(state: GameState): RoundSettlement {
       discardedCards: [...state.discardedCards, ...reclaimed],
       cumulativeSeriesPrices,
       auction: null,
+      lastRoundSettlement: snapshot,
     },
     rankings,
     ledger,
@@ -96,7 +107,8 @@ export function advanceAfterSettlement(state: GameState): GameState {
 
   const { roundEndHostPlayerId, ...baseState } = state;
   if (state.round === 4) {
-    return { ...baseState, status: 'FINISHED', auction: null };
+    const finalStandings: readonly FinalStanding[] = rankPlayers(Object.values(state.players));
+    return { ...baseState, status: 'FINISHED', auction: null, finalStandings };
   }
 
   const nextRound = (state.round + 1) as RoundNumber;

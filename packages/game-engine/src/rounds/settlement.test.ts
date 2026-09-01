@@ -173,3 +173,70 @@ describe('round ranking and settlement', () => {
     expect(finished.status).toBe('FINISHED');
   });
 });
+
+describe('round settlement command flow', () => {
+  it('attaches a player-specific settlement view when a played card ends the round', () => {
+    const trigger = card('trigger-summary', 'BLUE', 3);
+    const owned = card('owned-summary', 'BLACK', 2);
+    let state = replacePlayers(baseState(), {
+      p1: { hand: [trigger], purchasedCards: [owned] },
+      p2: { hand: [] },
+      p3: { hand: [] },
+    });
+    state = { ...state, hostPlayerId: 'p1', seriesCounts: { BLACK: 1, BLUE: 5, GREEN: 0, YELLOW: 0, RED: 0 } };
+
+    const result = succeed(handleCommand(state, command(state, 'p1', 'PLAY_CARD', { cardId: trigger.id }), NOW));
+
+    expect(result.state.status).toBe('ROUND_SETTLEMENT');
+    expect(result.state.lastRoundSettlement?.round).toBe(1);
+    expect(result.state.lastRoundSettlement?.rankings[0]).toMatchObject({ series: 'BLUE', addedPrice: 30 });
+    expect(result.state.lastRoundSettlement?.ledger).toContainEqual(expect.objectContaining({ playerId: 'p1', cardId: 'owned-summary', delta: 40 }));
+    expect(result.state.players.p1?.purchasedCards).toEqual([]);
+  });
+
+  it('advances a settled round and publishes final standings after round four', () => {
+    let state = replacePlayers(baseState(), { p1: { cash: 20 }, p2: { cash: 20 }, p3: { cash: -5 } });
+    state = { ...state, round: 4, status: 'ROUND_SETTLEMENT', lastRoundSettlement: { round: 4, rankings: [], ledger: [] } };
+
+    const result = succeed(handleCommand(state, command(state, 'p1', 'ADVANCE_AFTER_SETTLEMENT', {}), NOW));
+
+    expect(result.state.status).toBe('FINISHED');
+    expect(result.state.finalStandings).toEqual([
+      { playerId: 'p1', cash: 20, place: 1, winner: true },
+      { playerId: 'p2', cash: 20, place: 1, winner: true },
+      { playerId: 'p3', cash: -5, place: 3, winner: false },
+    ]);
+  });
+});
+
+describe('settlement idempotency', () => {
+  it('does not apply the same round settlement twice', () => {
+    const owned = card('idempotent-owned', 'BLACK', 2);
+    let state = replacePlayers(baseState(), { p1: { cash: 10, purchasedCards: [owned] } });
+    state = { ...state, status: 'ROUND_SETTLEMENT', seriesCounts: { BLACK: 1, BLUE: 0, GREEN: 0, YELLOW: 0, RED: 0 } };
+
+    const first = settleRound(state).state;
+    const second = settleRound(first).state;
+
+    expect(second.players.p1?.cash).toBe(first.players.p1?.cash);
+    expect(second.cumulativeSeriesPrices).toEqual(first.cumulativeSeriesPrices);
+    expect(second.lastRoundSettlement).toEqual(first.lastRoundSettlement);
+  });
+});
+
+describe('host rotation with depleted hands', () => {
+  it('skips players without cards after a completed auction', () => {
+    const offered = card('rotation-card', 'YELLOW', 1);
+    let state = replacePlayers(baseState(), {
+      p1: { hand: [offered] },
+      p2: { hand: [] },
+      p3: { hand: [card('remaining-card', 'RED', 1)] },
+    });
+    state = { ...state, hostPlayerId: 'p1' };
+    state = succeed(handleCommand(state, command(state, 'p1', 'PLAY_CARD', { cardId: offered.id }), NOW)).state;
+    const result = succeed(handleCommand(state, command(state, 'p1', 'EXPIRE_AUCTION', {}), new Date(NOW.getTime() + 30_000)));
+
+    expect(result.state.status).toBe('IN_PROGRESS');
+    expect(result.state.hostPlayerId).toBe('p3');
+  });
+});

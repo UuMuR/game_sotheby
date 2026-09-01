@@ -1,6 +1,9 @@
 import type { CardDefinition, CollectionSeries, Money } from '@sotheby/contracts';
 
 import type { GameCommandInput } from './commands.ts';
+import type { FinalStanding } from './game-result.ts';
+import type { LedgerEntry } from './rounds/settlement.ts';
+import type { RankedSeries } from './rounds/ranking.ts';
 
 export type GameStatus = 'IN_PROGRESS' | 'ROUND_SETTLEMENT' | 'FINISHED';
 export type RoundNumber = 1 | 2 | 3 | 4;
@@ -95,6 +98,12 @@ export type ActiveAuctionState =
   | SealedBidAuctionState
   | JointAuctionState;
 
+export interface RoundSettlementSnapshot {
+  round: RoundNumber;
+  rankings: readonly RankedSeries[];
+  ledger: readonly LedgerEntry[];
+}
+
 export interface GameState {
   roomId: string;
   gameId: string;
@@ -112,6 +121,8 @@ export interface GameState {
   stateVersion: number;
   eventSequence: number;
   roundEndHostPlayerId?: string;
+  lastRoundSettlement?: RoundSettlementSnapshot;
+  finalStandings?: readonly FinalStanding[];
 }
 
 export interface InitializeGameInput {

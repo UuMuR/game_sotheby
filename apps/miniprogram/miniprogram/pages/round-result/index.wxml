@@ -1,1 +1,15 @@
-<view class="page result-page"><text class="title">{{model.title}}</text><view class="panel"><view wx:for="{{model.rankings}}" wx:key="series" class="row"><text>{{index + 1}}. {{item.series}}</text><text>{{item.count}} 件 · +{{item.addedPrice}} 万 · 累计 {{item.cumulativePrice}} 万</text></view></view><view class="panel"><text class="section-title">我的结算</text><view wx:for="{{model.ledger}}" wx:key="cardName" class="row"><text>{{item.cardName}} · {{item.reasonLabel}}</text><text>{{item.amountLabel}}</text></view><view class="balance">结算后 {{model.balanceLabel}}</view></view><button class="primary">进入下一阶段</button></view>
+<view class="page result-page" wx:if="{{model}}">
+  <text class="title">{{model.title}}</text>
+  <view class="panel">
+    <view wx:for="{{model.rankings}}" wx:key="series" class="row">
+      <text>{{index + 1}}. {{item.series}}</text>
+      <text>{{item.count}} 件 · +{{item.addedPrice}} 万 · 累计 {{item.cumulativePrice}} 万</text>
+    </view>
+  </view>
+  <view class="panel">
+    <text class="section-title">我的结算</text>
+    <view wx:for="{{model.ledger}}" wx:key="cardName" class="row"><text>{{item.cardName}} · {{item.reasonLabel}}</text><text>{{item.amountLabel}}</text></view>
+    <view class="balance">结算后 {{model.balanceLabel}}</view>
+  </view>
+  <button class="primary" bindtap="onContinue">继续</button>
+</view>

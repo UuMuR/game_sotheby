@@ -81,6 +81,21 @@ export class RoomService {
     return this.store.findActiveRoomByPlayer(playerId);
   }
 
+  getForPlayer(roomId: string, playerId: string): Room {
+    const room = this.store.getRoom(roomId);
+    if (!room) throw new Error('ROOM_NOT_FOUND');
+    if (!room.players.some((player) => player.id === playerId)) {
+      throw new Error('PLAYER_NOT_IN_ROOM');
+    }
+    return room;
+  }
+
+  markFinished(roomId: string): void {
+    const room = this.store.getRoom(roomId);
+    if (!room) return;
+    this.store.saveRoom({ ...room, status: 'FINISHED' });
+  }
+
   create(owner: PlayerProfile): Room {
     this.assertNotInActiveRoom(owner.id);
     let code = this.randomCode();

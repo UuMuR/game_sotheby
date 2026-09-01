@@ -20,6 +20,7 @@ Page({
   onChooseAvatar(this: ProfilePageContext, event: { detail: { avatarUrl: string } }) {
     this.setData({ avatarUrl: event.detail.avatarUrl });
   },
+  onOpenHistory() { platform.navigateTo('/pages/history/index'); },
   async onSave(this: ProfilePageContext) {
     const validation = validateProfile({
       nickname: this.data.nickname,

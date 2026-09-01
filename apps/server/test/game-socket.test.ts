@@ -130,3 +130,21 @@ describe('serialized game commands', () => {
     expect(gameStore.get('game-1')?.eventSequence).toBe(2);
   });
 });
+
+describe('state synchronization messages', () => {
+  it('answers SYNC_STATE without treating it as a game command', async () => {
+    const connections = new InMemoryConnectionRegistry();
+    const socket = { readyState: 1, messages: [] as string[], send(data: string) { this.messages.push(data); }, close() { this.readyState = 3; } };
+    const state = createState();
+    const games = new InMemoryGameSessionStore();
+    games.seed(state);
+    connections.add(state.gameId, 'p2', socket);
+
+    const { sendCurrentState } = await import('../src/games/socket-route.ts');
+    sendCurrentState(connections, games, state.gameId, 'p2');
+
+    const message = JSON.parse(socket.messages[0] ?? '{}') as { type?: string; state?: { self?: { id?: string } } };
+    expect(message.type).toBe('STATE');
+    expect(message.state?.self?.id).toBe('p2');
+  });
+});

@@ -13,6 +13,7 @@ interface LobbyPageContext {
   data: LobbyPageData;
   setData(data: Partial<LobbyPageData>): void;
   setRoom(room: LobbyRoomView): void;
+  refreshTimer?: number;
 }
 
 Page({
@@ -23,8 +24,32 @@ Page({
     canToggleReady: false,
     ready: false,
   },
-  onLoad(this: LobbyPageContext, options: { roomId?: string }) {
-    this.setData({ roomId: options.roomId ?? '' });
+  async onLoad(this: LobbyPageContext, options: { roomId?: string }) {
+    const roomId = options.roomId ?? '';
+    this.setData({ roomId });
+    if (roomId) this.setRoom(await rooms.get(roomId));
+  },
+  async onShow(this: LobbyPageContext) {
+    if (!this.data.roomId) return;
+    this.setRoom(await rooms.get(this.data.roomId));
+    this.refreshTimer = setInterval(async () => {
+      try {
+        const room = await rooms.get(this.data.roomId);
+        this.setRoom(room);
+        if (room.status === 'IN_GAME' && room.gameId) {
+          clearInterval(this.refreshTimer);
+          platform.redirectTo(`/pages/game/index?gameId=${room.gameId}`);
+        }
+      } catch {
+        clearInterval(this.refreshTimer);
+      }
+    }, 1000) as unknown as number;
+  },
+  onHide(this: LobbyPageContext) {
+    if (this.refreshTimer !== undefined) clearInterval(this.refreshTimer);
+  },
+  onUnload(this: LobbyPageContext) {
+    if (this.refreshTimer !== undefined) clearInterval(this.refreshTimer);
   },
   setRoom(this: LobbyPageContext, room: LobbyRoomView) {
     const playerId = session.current()?.playerId ?? '';

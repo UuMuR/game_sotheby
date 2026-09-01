@@ -95,3 +95,16 @@ function fakeSocket(): SocketConnection & { messages: string[]; closed: boolean 
     close() { this.closed = true; this.readyState = 3; },
   };
 }
+
+describe('command deadline scheduling', () => {
+  it('persists every deadline returned by an accepted command', async () => {
+    const games = new InMemoryGameSessionStore();
+    const initial = baseState();
+    games.seed(initial);
+    const deadlines = new InMemoryDeadlineStore();
+    const service = new CommandService({ gameStore: games, roomLock: new InMemoryRoomLock(), connections: new InMemoryConnectionRegistry(), deadlineStore: deadlines });
+    await service.execute({ type: 'COMMAND', requestId: 'play-with-deadline', roomId: initial.roomId, gameId: initial.gameId, playerId: 'p1', stateVersion: initial.stateVersion, command: { type: 'PLAY_CARD', payload: { cardId: initial.players.p1!.hand[0]!.id } } }, new Date('2026-09-01T08:00:00.000Z'));
+
+    expect(await deadlines.claimDue(new Date('2026-09-01T08:00:30.000Z'))).toMatchObject({ action: 'EXPIRE_AUCTION', expectedStateVersion: 2 });
+  });
+});

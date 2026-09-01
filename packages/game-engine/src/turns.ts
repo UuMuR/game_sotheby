@@ -41,3 +41,12 @@ export function nextSequentialActor(
   }
   return null;
 }
+
+export function nextPlayerWithCards(state: GameState, afterPlayerId: string): string | null {
+  let candidateId = nextSeatPlayerId(state, afterPlayerId);
+  for (let checked = 0; checked < state.seatOrder.length; checked += 1) {
+    if ((state.players[candidateId]?.hand.length ?? 0) > 0) return candidateId;
+    candidateId = nextSeatPlayerId(state, candidateId);
+  }
+  return null;
+}

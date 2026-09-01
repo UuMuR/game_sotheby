@@ -1,5 +1,7 @@
 import type { PlayerGameView } from '@sotheby/contracts';
 
+import { WS_BASE_URL } from '../config.ts';
+
 import type { ClientGameCommand } from './game-commands.ts';
 import { createCommandEnvelope } from './game-commands.ts';
 import type { GameStore } from '../store/game-store.ts';
@@ -34,7 +36,7 @@ export function createGameSocket(platform: SocketPlatform, store?: GameStore) {
     options = next;
     closedByUser = false;
     socket = platform.connect({
-      url: `ws://127.0.0.1:3000/v1/games/${next.gameId}/socket?token=${encodeURIComponent(next.token)}`,
+      url: `${WS_BASE_URL}/v1/games/${next.gameId}/socket?token=${encodeURIComponent(next.token)}`,
     });
     socket.onOpen(() => socket?.send({ data: JSON.stringify({ type: 'SYNC_STATE' }) }));
     socket.onMessage((message) => {

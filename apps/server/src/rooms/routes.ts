@@ -7,7 +7,7 @@ import type { RoomService } from './room-service.ts';
 function statusFor(code: string): number {
   if (code === 'ROOM_NOT_FOUND') return 404;
   if (['ROOM_FULL', 'GAME_ALREADY_STARTED', 'INVALID_PLAYER_COUNT', 'PLAYERS_NOT_READY', 'PLAYER_ALREADY_IN_ROOM'].includes(code)) return 409;
-  if (['NOT_ROOM_OWNER'].includes(code)) return 403;
+  if (['NOT_ROOM_OWNER', 'PLAYER_NOT_IN_ROOM'].includes(code)) return 403;
   return 400;
 }
 
@@ -21,6 +21,16 @@ export function registerRoomRoutes(app: FastifyInstance, roomService: RoomServic
     if (!player) return reply.code(401).send({ code: 'UNAUTHORIZED' });
     const room = roomService.findActiveRoom(player.id);
     return { gameId: room?.status === 'IN_GAME' ? room.gameId : undefined };
+  });
+
+  app.get('/v1/rooms/:id', async (request, reply) => {
+    const player = playerOr401(request, sessionService);
+    if (!player) return reply.code(401).send({ code: 'UNAUTHORIZED' });
+    try {
+      return roomService.getForPlayer((request.params as { id: string }).id, player.id);
+    } catch (error) {
+      return reply.code(statusFor((error as Error).message)).send({ code: (error as Error).message });
+    }
   });
 
   app.post('/v1/rooms', async (request, reply) => {

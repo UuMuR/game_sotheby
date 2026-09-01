@@ -2,7 +2,7 @@ import type { CardDefinition, Money } from '@sotheby/contracts';
 
 import type { ActiveAuctionState, GameState, PlayerState } from '../model.ts';
 import { areAllHandsEmpty } from '../rounds/end-condition.ts';
-import { nextSeatPlayerId } from '../turns.ts';
+import { nextPlayerWithCards } from '../turns.ts';
 import { settleJointPurchase } from './joint.ts';
 
 export interface CashTransfer {
@@ -48,7 +48,7 @@ function standardSettlement(
     state: {
       ...afterPurchase,
       status: roundEnded ? 'ROUND_SETTLEMENT' : state.status,
-      hostPlayerId: roundEnded ? nextHostBaseId : nextSeatPlayerId(state, nextHostBaseId),
+      hostPlayerId: roundEnded ? nextHostBaseId : nextPlayerWithCards(afterPurchase, nextHostBaseId) ?? nextHostBaseId,
       ...(roundEnded ? { roundEndHostPlayerId: nextHostBaseId } : {}),
     },
     transfers,

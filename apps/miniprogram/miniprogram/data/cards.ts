@@ -1,0 +1,762 @@
+import type { CardDefinition } from '@sotheby/contracts';
+
+export const CARD_CATALOG: readonly CardDefinition[] = [
+  {
+    "id": "BK-001",
+    "name": "午夜钟楼",
+    "series": "BLACK",
+    "rarity": 1,
+    "auctionType": "OPEN",
+    "stolen": false,
+    "imageKey": "bk-001"
+  },
+  {
+    "id": "BK-002",
+    "name": "乌木面具",
+    "series": "BLACK",
+    "rarity": 2,
+    "auctionType": "SEQUENTIAL",
+    "stolen": false,
+    "imageKey": "bk-002"
+  },
+  {
+    "id": "BK-003",
+    "name": "深渊罗盘",
+    "series": "BLACK",
+    "rarity": 3,
+    "auctionType": "FIXED_PRICE",
+    "stolen": false,
+    "imageKey": "bk-003"
+  },
+  {
+    "id": "BK-004",
+    "name": "黑曜王冠",
+    "series": "BLACK",
+    "rarity": 1,
+    "auctionType": "SEALED_BID",
+    "stolen": true,
+    "imageKey": "bk-004"
+  },
+  {
+    "id": "BK-005",
+    "name": "夜航手稿",
+    "series": "BLACK",
+    "rarity": 4,
+    "auctionType": "JOINT",
+    "stolen": false,
+    "imageKey": "bk-005"
+  },
+  {
+    "id": "BK-006",
+    "name": "无光圣杯",
+    "series": "BLACK",
+    "rarity": 5,
+    "auctionType": "OPEN",
+    "stolen": false,
+    "imageKey": "bk-006"
+  },
+  {
+    "id": "BK-007",
+    "name": "玄铁星盘",
+    "series": "BLACK",
+    "rarity": 2,
+    "auctionType": "SEQUENTIAL",
+    "stolen": false,
+    "imageKey": "bk-007"
+  },
+  {
+    "id": "BK-008",
+    "name": "暗影竖琴",
+    "series": "BLACK",
+    "rarity": 3,
+    "auctionType": "SEALED_BID",
+    "stolen": true,
+    "imageKey": "bk-008"
+  },
+  {
+    "id": "BK-009",
+    "name": "墨色方舟",
+    "series": "BLACK",
+    "rarity": 4,
+    "auctionType": "FIXED_PRICE",
+    "stolen": false,
+    "imageKey": "bk-009"
+  },
+  {
+    "id": "BK-010",
+    "name": "永夜权杖",
+    "series": "BLACK",
+    "rarity": 5,
+    "auctionType": "JOINT",
+    "stolen": false,
+    "imageKey": "bk-010"
+  },
+  {
+    "id": "BK-011",
+    "name": "幽影徽章",
+    "series": "BLACK",
+    "rarity": 2,
+    "auctionType": "OPEN",
+    "stolen": false,
+    "imageKey": "bk-011"
+  },
+  {
+    "id": "BK-012",
+    "name": "静默之门",
+    "series": "BLACK",
+    "rarity": 5,
+    "auctionType": "SEALED_BID",
+    "stolen": true,
+    "imageKey": "bk-012"
+  },
+  {
+    "id": "BK-013",
+    "name": "月蚀怀表",
+    "series": "BLACK",
+    "rarity": 1,
+    "auctionType": "SEQUENTIAL",
+    "stolen": false,
+    "imageKey": "bk-013"
+  },
+  {
+    "id": "BK-014",
+    "name": "冥河宝匣",
+    "series": "BLACK",
+    "rarity": 4,
+    "auctionType": "FIXED_PRICE",
+    "stolen": false,
+    "imageKey": "bk-014"
+  },
+  {
+    "id": "BK-015",
+    "name": "鸦羽肖像",
+    "series": "BLACK",
+    "rarity": 3,
+    "auctionType": "SEALED_BID",
+    "stolen": false,
+    "imageKey": "bk-015"
+  },
+  {
+    "id": "BL-001",
+    "name": "潮汐之眼",
+    "series": "BLUE",
+    "rarity": 1,
+    "auctionType": "OPEN",
+    "stolen": false,
+    "imageKey": "bl-001"
+  },
+  {
+    "id": "BL-002",
+    "name": "蔚蓝航图",
+    "series": "BLUE",
+    "rarity": 2,
+    "auctionType": "SEQUENTIAL",
+    "stolen": false,
+    "imageKey": "bl-002"
+  },
+  {
+    "id": "BL-003",
+    "name": "深海珍珠",
+    "series": "BLUE",
+    "rarity": 3,
+    "auctionType": "FIXED_PRICE",
+    "stolen": false,
+    "imageKey": "bl-003"
+  },
+  {
+    "id": "BL-004",
+    "name": "冬夜星河",
+    "series": "BLUE",
+    "rarity": 1,
+    "auctionType": "SEALED_BID",
+    "stolen": true,
+    "imageKey": "bl-004"
+  },
+  {
+    "id": "BL-005",
+    "name": "琉璃海马",
+    "series": "BLUE",
+    "rarity": 4,
+    "auctionType": "JOINT",
+    "stolen": false,
+    "imageKey": "bl-005"
+  },
+  {
+    "id": "BL-006",
+    "name": "远洋日记",
+    "series": "BLUE",
+    "rarity": 5,
+    "auctionType": "OPEN",
+    "stolen": false,
+    "imageKey": "bl-006"
+  },
+  {
+    "id": "BL-007",
+    "name": "群岛银币",
+    "series": "BLUE",
+    "rarity": 2,
+    "auctionType": "SEQUENTIAL",
+    "stolen": false,
+    "imageKey": "bl-007"
+  },
+  {
+    "id": "BL-008",
+    "name": "雾港密函",
+    "series": "BLUE",
+    "rarity": 3,
+    "auctionType": "SEALED_BID",
+    "stolen": true,
+    "imageKey": "bl-008"
+  },
+  {
+    "id": "BL-009",
+    "name": "苍穹沙漏",
+    "series": "BLUE",
+    "rarity": 4,
+    "auctionType": "FIXED_PRICE",
+    "stolen": false,
+    "imageKey": "bl-009"
+  },
+  {
+    "id": "BL-010",
+    "name": "蓝鲸骨雕",
+    "series": "BLUE",
+    "rarity": 5,
+    "auctionType": "JOINT",
+    "stolen": false,
+    "imageKey": "bl-010"
+  },
+  {
+    "id": "BL-011",
+    "name": "冰川花瓶",
+    "series": "BLUE",
+    "rarity": 2,
+    "auctionType": "OPEN",
+    "stolen": false,
+    "imageKey": "bl-011"
+  },
+  {
+    "id": "BL-012",
+    "name": "沉船怀表",
+    "series": "BLUE",
+    "rarity": 5,
+    "auctionType": "SEALED_BID",
+    "stolen": true,
+    "imageKey": "bl-012"
+  },
+  {
+    "id": "BL-013",
+    "name": "海风八音盒",
+    "series": "BLUE",
+    "rarity": 1,
+    "auctionType": "SEQUENTIAL",
+    "stolen": false,
+    "imageKey": "bl-013"
+  },
+  {
+    "id": "BL-014",
+    "name": "天青瓷盘",
+    "series": "BLUE",
+    "rarity": 4,
+    "auctionType": "FIXED_PRICE",
+    "stolen": false,
+    "imageKey": "bl-014"
+  },
+  {
+    "id": "BL-015",
+    "name": "极光项链",
+    "series": "BLUE",
+    "rarity": 3,
+    "auctionType": "JOINT",
+    "stolen": false,
+    "imageKey": "bl-015"
+  },
+  {
+    "id": "BL-016",
+    "name": "珊瑚王座",
+    "series": "BLUE",
+    "rarity": 3,
+    "auctionType": "SEALED_BID",
+    "stolen": false,
+    "imageKey": "bl-016"
+  },
+  {
+    "id": "GR-001",
+    "name": "翡翠甲虫",
+    "series": "GREEN",
+    "rarity": 1,
+    "auctionType": "OPEN",
+    "stolen": false,
+    "imageKey": "gr-001"
+  },
+  {
+    "id": "GR-002",
+    "name": "苔原王冠",
+    "series": "GREEN",
+    "rarity": 2,
+    "auctionType": "SEQUENTIAL",
+    "stolen": false,
+    "imageKey": "gr-002"
+  },
+  {
+    "id": "GR-003",
+    "name": "森语长笛",
+    "series": "GREEN",
+    "rarity": 3,
+    "auctionType": "FIXED_PRICE",
+    "stolen": false,
+    "imageKey": "gr-003"
+  },
+  {
+    "id": "GR-004",
+    "name": "藤蔓秘卷",
+    "series": "GREEN",
+    "rarity": 1,
+    "auctionType": "SEALED_BID",
+    "stolen": true,
+    "imageKey": "gr-004"
+  },
+  {
+    "id": "GR-005",
+    "name": "青铜鹿像",
+    "series": "GREEN",
+    "rarity": 4,
+    "auctionType": "JOINT",
+    "stolen": false,
+    "imageKey": "gr-005"
+  },
+  {
+    "id": "GR-006",
+    "name": "春神酒杯",
+    "series": "GREEN",
+    "rarity": 5,
+    "auctionType": "OPEN",
+    "stolen": false,
+    "imageKey": "gr-006"
+  },
+  {
+    "id": "GR-007",
+    "name": "古树年轮",
+    "series": "GREEN",
+    "rarity": 2,
+    "auctionType": "SEQUENTIAL",
+    "stolen": false,
+    "imageKey": "gr-007"
+  },
+  {
+    "id": "GR-008",
+    "name": "迷雾药瓶",
+    "series": "GREEN",
+    "rarity": 3,
+    "auctionType": "SEALED_BID",
+    "stolen": true,
+    "imageKey": "gr-008"
+  },
+  {
+    "id": "GR-009",
+    "name": "翠羽折扇",
+    "series": "GREEN",
+    "rarity": 4,
+    "auctionType": "FIXED_PRICE",
+    "stolen": false,
+    "imageKey": "gr-009"
+  },
+  {
+    "id": "GR-010",
+    "name": "雨林图腾",
+    "series": "GREEN",
+    "rarity": 5,
+    "auctionType": "JOINT",
+    "stolen": false,
+    "imageKey": "gr-010"
+  },
+  {
+    "id": "GR-011",
+    "name": "橄榄枝冠",
+    "series": "GREEN",
+    "rarity": 2,
+    "auctionType": "OPEN",
+    "stolen": false,
+    "imageKey": "gr-011"
+  },
+  {
+    "id": "GR-012",
+    "name": "猎人绿宝石",
+    "series": "GREEN",
+    "rarity": 5,
+    "auctionType": "SEALED_BID",
+    "stolen": true,
+    "imageKey": "gr-012"
+  },
+  {
+    "id": "GR-013",
+    "name": "山谷风铃",
+    "series": "GREEN",
+    "rarity": 1,
+    "auctionType": "SEQUENTIAL",
+    "stolen": false,
+    "imageKey": "gr-013"
+  },
+  {
+    "id": "GR-014",
+    "name": "绿洲地图",
+    "series": "GREEN",
+    "rarity": 4,
+    "auctionType": "FIXED_PRICE",
+    "stolen": false,
+    "imageKey": "gr-014"
+  },
+  {
+    "id": "GR-015",
+    "name": "祖母绿戒指",
+    "series": "GREEN",
+    "rarity": 3,
+    "auctionType": "JOINT",
+    "stolen": false,
+    "imageKey": "gr-015"
+  },
+  {
+    "id": "GR-016",
+    "name": "林间座钟",
+    "series": "GREEN",
+    "rarity": 4,
+    "auctionType": "SEALED_BID",
+    "stolen": false,
+    "imageKey": "gr-016"
+  },
+  {
+    "id": "GR-017",
+    "name": "青藤镜匣",
+    "series": "GREEN",
+    "rarity": 3,
+    "auctionType": "OPEN",
+    "stolen": false,
+    "imageKey": "gr-017"
+  },
+  {
+    "id": "YL-001",
+    "name": "鎏金日轮",
+    "series": "YELLOW",
+    "rarity": 1,
+    "auctionType": "OPEN",
+    "stolen": false,
+    "imageKey": "yl-001"
+  },
+  {
+    "id": "YL-002",
+    "name": "琥珀羽冠",
+    "series": "YELLOW",
+    "rarity": 2,
+    "auctionType": "SEQUENTIAL",
+    "stolen": false,
+    "imageKey": "yl-002"
+  },
+  {
+    "id": "YL-003",
+    "name": "沙海方碑",
+    "series": "YELLOW",
+    "rarity": 3,
+    "auctionType": "FIXED_PRICE",
+    "stolen": false,
+    "imageKey": "yl-003"
+  },
+  {
+    "id": "YL-004",
+    "name": "失落金印",
+    "series": "YELLOW",
+    "rarity": 1,
+    "auctionType": "SEALED_BID",
+    "stolen": true,
+    "imageKey": "yl-004"
+  },
+  {
+    "id": "YL-005",
+    "name": "麦穗权杖",
+    "series": "YELLOW",
+    "rarity": 4,
+    "auctionType": "JOINT",
+    "stolen": false,
+    "imageKey": "yl-005"
+  },
+  {
+    "id": "YL-006",
+    "name": "晨曦壁毯",
+    "series": "YELLOW",
+    "rarity": 5,
+    "auctionType": "OPEN",
+    "stolen": false,
+    "imageKey": "yl-006"
+  },
+  {
+    "id": "YL-007",
+    "name": "黄铜天球",
+    "series": "YELLOW",
+    "rarity": 2,
+    "auctionType": "SEQUENTIAL",
+    "stolen": false,
+    "imageKey": "yl-007"
+  },
+  {
+    "id": "YL-008",
+    "name": "太阳祭盘",
+    "series": "YELLOW",
+    "rarity": 3,
+    "auctionType": "SEALED_BID",
+    "stolen": true,
+    "imageKey": "yl-008"
+  },
+  {
+    "id": "YL-009",
+    "name": "蜜蜡胸针",
+    "series": "YELLOW",
+    "rarity": 4,
+    "auctionType": "FIXED_PRICE",
+    "stolen": false,
+    "imageKey": "yl-009"
+  },
+  {
+    "id": "YL-010",
+    "name": "金雀花冠",
+    "series": "YELLOW",
+    "rarity": 5,
+    "auctionType": "JOINT",
+    "stolen": false,
+    "imageKey": "yl-010"
+  },
+  {
+    "id": "YL-011",
+    "name": "荒原号角",
+    "series": "YELLOW",
+    "rarity": 2,
+    "auctionType": "OPEN",
+    "stolen": false,
+    "imageKey": "yl-011"
+  },
+  {
+    "id": "YL-012",
+    "name": "王室金杯",
+    "series": "YELLOW",
+    "rarity": 5,
+    "auctionType": "SEALED_BID",
+    "stolen": true,
+    "imageKey": "yl-012"
+  },
+  {
+    "id": "YL-013",
+    "name": "柠月诗卷",
+    "series": "YELLOW",
+    "rarity": 1,
+    "auctionType": "SEQUENTIAL",
+    "stolen": false,
+    "imageKey": "yl-013"
+  },
+  {
+    "id": "YL-014",
+    "name": "古堡钥匙",
+    "series": "YELLOW",
+    "rarity": 4,
+    "auctionType": "FIXED_PRICE",
+    "stolen": false,
+    "imageKey": "yl-014"
+  },
+  {
+    "id": "YL-015",
+    "name": "霞光宝镜",
+    "series": "YELLOW",
+    "rarity": 3,
+    "auctionType": "JOINT",
+    "stolen": false,
+    "imageKey": "yl-015"
+  },
+  {
+    "id": "YL-016",
+    "name": "沙漏之心",
+    "series": "YELLOW",
+    "rarity": 2,
+    "auctionType": "SEALED_BID",
+    "stolen": false,
+    "imageKey": "yl-016"
+  },
+  {
+    "id": "YL-017",
+    "name": "黄金航标",
+    "series": "YELLOW",
+    "rarity": 1,
+    "auctionType": "SEQUENTIAL",
+    "stolen": false,
+    "imageKey": "yl-017"
+  },
+  {
+    "id": "YL-018",
+    "name": "琉光烛台",
+    "series": "YELLOW",
+    "rarity": 3,
+    "auctionType": "FIXED_PRICE",
+    "stolen": false,
+    "imageKey": "yl-018"
+  },
+  {
+    "id": "RD-001",
+    "name": "赤焰王冠",
+    "series": "RED",
+    "rarity": 1,
+    "auctionType": "OPEN",
+    "stolen": false,
+    "imageKey": "rd-001"
+  },
+  {
+    "id": "RD-002",
+    "name": "绯红舞鞋",
+    "series": "RED",
+    "rarity": 2,
+    "auctionType": "SEQUENTIAL",
+    "stolen": false,
+    "imageKey": "rd-002"
+  },
+  {
+    "id": "RD-003",
+    "name": "朱砂秘卷",
+    "series": "RED",
+    "rarity": 4,
+    "auctionType": "FIXED_PRICE",
+    "stolen": false,
+    "imageKey": "rd-003"
+  },
+  {
+    "id": "RD-004",
+    "name": "燃烧玫瑰",
+    "series": "RED",
+    "rarity": 1,
+    "auctionType": "SEALED_BID",
+    "stolen": true,
+    "imageKey": "rd-004"
+  },
+  {
+    "id": "RD-005",
+    "name": "红玉权杖",
+    "series": "RED",
+    "rarity": 4,
+    "auctionType": "JOINT",
+    "stolen": false,
+    "imageKey": "rd-005"
+  },
+  {
+    "id": "RD-006",
+    "name": "落日战旗",
+    "series": "RED",
+    "rarity": 5,
+    "auctionType": "OPEN",
+    "stolen": false,
+    "imageKey": "rd-006"
+  },
+  {
+    "id": "RD-007",
+    "name": "珊瑚胸针",
+    "series": "RED",
+    "rarity": 2,
+    "auctionType": "SEQUENTIAL",
+    "stolen": false,
+    "imageKey": "rd-007"
+  },
+  {
+    "id": "RD-008",
+    "name": "血月怀表",
+    "series": "RED",
+    "rarity": 3,
+    "auctionType": "SEALED_BID",
+    "stolen": true,
+    "imageKey": "rd-008"
+  },
+  {
+    "id": "RD-009",
+    "name": "丹霞宝瓶",
+    "series": "RED",
+    "rarity": 4,
+    "auctionType": "FIXED_PRICE",
+    "stolen": false,
+    "imageKey": "rd-009"
+  },
+  {
+    "id": "RD-010",
+    "name": "火鸟羽扇",
+    "series": "RED",
+    "rarity": 5,
+    "auctionType": "JOINT",
+    "stolen": false,
+    "imageKey": "rd-010"
+  },
+  {
+    "id": "RD-011",
+    "name": "胭脂画屏",
+    "series": "RED",
+    "rarity": 2,
+    "auctionType": "OPEN",
+    "stolen": false,
+    "imageKey": "rd-011"
+  },
+  {
+    "id": "RD-012",
+    "name": "猩红圣杯",
+    "series": "RED",
+    "rarity": 5,
+    "auctionType": "SEALED_BID",
+    "stolen": true,
+    "imageKey": "rd-012"
+  },
+  {
+    "id": "RD-013",
+    "name": "红枫木雕",
+    "series": "RED",
+    "rarity": 1,
+    "auctionType": "SEQUENTIAL",
+    "stolen": false,
+    "imageKey": "rd-013"
+  },
+  {
+    "id": "RD-014",
+    "name": "熔岩面具",
+    "series": "RED",
+    "rarity": 3,
+    "auctionType": "FIXED_PRICE",
+    "stolen": false,
+    "imageKey": "rd-014"
+  },
+  {
+    "id": "RD-015",
+    "name": "朱雀金印",
+    "series": "RED",
+    "rarity": 3,
+    "auctionType": "JOINT",
+    "stolen": false,
+    "imageKey": "rd-015"
+  },
+  {
+    "id": "RD-016",
+    "name": "石榴石环",
+    "series": "RED",
+    "rarity": 4,
+    "auctionType": "SEALED_BID",
+    "stolen": false,
+    "imageKey": "rd-016"
+  },
+  {
+    "id": "RD-017",
+    "name": "赤铜号角",
+    "series": "RED",
+    "rarity": 1,
+    "auctionType": "OPEN",
+    "stolen": false,
+    "imageKey": "rd-017"
+  },
+  {
+    "id": "RD-018",
+    "name": "晚霞织锦",
+    "series": "RED",
+    "rarity": 2,
+    "auctionType": "JOINT",
+    "stolen": false,
+    "imageKey": "rd-018"
+  }
+] as const;
+
+export const CARD_BY_ID = new Map(CARD_CATALOG.map((card) => [card.id, card]));

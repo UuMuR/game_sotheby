@@ -1,1 +1,9 @@
-<view class="page final-page"><text class="eyebrow">拍卖落槌</text><text class="title">{{model.winnerNames.join('、')}} 获胜</text><view class="ranking"><view wx:for="{{model.rows}}" wx:key="playerId" class="row {{item.winner ? 'winner' : ''}}"><text>第 {{item.place}} 名 · {{item.nickname}}</text><text>{{item.cashLabel}}</text></view></view><button class="primary">返回首页</button></view>
+<view class="page final-page">
+  <view wx:if="{{loading}}">加载结算结果…</view>
+  <block wx:elif="{{model}}">
+    <text class="eyebrow">拍卖落槌</text>
+    <text class="title">{{model.winnerLabel}} 获胜</text>
+    <view class="ranking"><view wx:for="{{model.rows}}" wx:key="playerId" class="row {{item.winner ? 'winner' : ''}}"><text>第 {{item.place}} 名 · {{item.nickname}}</text><text>{{item.cashLabel}}</text></view></view>
+    <button class="primary" bindtap="onBackHome">返回首页</button>
+  </block>
+</view>

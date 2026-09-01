@@ -1,1 +1,8 @@
-<view class="hand"><text>我的手牌 {{cards.length}}</text><scroll-view scroll-x><view wx:for="{{cards}}" wx:key="id" class="hand-card" data-id="{{item.id}}" bindtap="select">{{item.name}}</view></scroll-view></view>
+<view class="hand">
+  <text>我的手牌 {{cards.length}}</text>
+  <scroll-view scroll-x>
+    <view wx:for="{{cards}}" wx:key="id" class="hand-card {{item.selectable ? '' : 'disabled'}}" data-id="{{item.id}}" data-selectable="{{item.selectable}}" bindtap="select">
+      <text>{{item.name}}</text><text>{{item.seriesLabel}} · {{item.rarityLabel}}</text>
+    </view>
+  </scroll-view>
+</view>

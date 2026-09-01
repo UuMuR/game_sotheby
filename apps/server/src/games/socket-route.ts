@@ -7,6 +7,18 @@ import type { SessionService } from '../auth/session-service.ts';
 import type { CommandService, ClientCommandEnvelope, GameSessionStore } from './command-service.ts';
 import type { ConnectionRegistry } from './connection-registry.ts';
 
+export function sendCurrentState(
+  connections: ConnectionRegistry,
+  gameStore: GameSessionStore,
+  gameId: string,
+  playerId: string,
+): boolean {
+  const state = gameStore.get(gameId);
+  if (!state || !state.players[playerId]) return false;
+  connections.send(gameId, playerId, { type: 'STATE', state: projectForPlayer(state, playerId) });
+  return true;
+}
+
 export function registerGameSocketRoute(
   app: FastifyInstance,
   dependencies: {
@@ -28,11 +40,17 @@ export function registerGameSocketRoute(
     }
 
     const remove = dependencies.connections.add(params.gameId, player.id, socket);
-    socket.send(JSON.stringify({ type: 'STATE', state: projectForPlayer(state, player.id) }));
+    sendCurrentState(dependencies.connections, dependencies.gameStore, params.gameId, player.id);
 
     socket.on('message', async (data) => {
       try {
-        const message = JSON.parse(data.toString()) as Omit<ClientCommandEnvelope, 'playerId' | 'gameId'>;
+        const message = JSON.parse(data.toString()) as
+          | { type: 'SYNC_STATE' }
+          | Omit<ClientCommandEnvelope, 'playerId' | 'gameId'>;
+        if (message.type === 'SYNC_STATE') {
+          sendCurrentState(dependencies.connections, dependencies.gameStore, params.gameId, player.id);
+          return;
+        }
         const response = await dependencies.commandService.execute(
           { ...message, gameId: params.gameId, playerId: player.id },
           new Date(),

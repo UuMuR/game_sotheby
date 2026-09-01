@@ -1,3 +1,5 @@
+import type { GameState } from '@sotheby/game-engine';
+
 export interface PublicRoundSummary {
   round: 1 | 2 | 3 | 4;
   rankings: readonly {
@@ -60,6 +62,39 @@ export class InMemoryResultStore implements ResultStore {
 
 export class ResultService {
   constructor(private readonly store: ResultStore) {}
+
+  saveFinishedGame(
+    state: GameState,
+    roomCode: string,
+    finishedAt: Date,
+  ): void {
+    if (state.status !== 'FINISHED' || !state.finalStandings) return;
+    this.store.save({
+      gameId: state.gameId,
+      roomCode,
+      finishedAt: finishedAt.toISOString(),
+      playerIds: state.seatOrder,
+      finalStandings: state.finalStandings.map((standing) => ({
+        ...standing,
+        nickname: state.players[standing.playerId]?.nickname ?? '已注销玩家',
+      })),
+      publicRoundSummaries: state.lastRoundSettlement
+        ? [{
+            round: state.lastRoundSettlement.round,
+            rankings: state.lastRoundSettlement.rankings.map((ranking) => ({
+              ...ranking,
+              cumulativePrice: state.cumulativeSeriesPrices[ranking.series],
+            })),
+          }]
+        : [],
+      privateLedgers: Object.fromEntries(
+        state.seatOrder.map((playerId) => [
+          playerId,
+          (state.lastRoundSettlement?.ledger ?? []).filter((entry) => entry.playerId === playerId),
+        ]),
+      ),
+    });
+  }
 
   getForPlayer(gameId: string, playerId: string) {
     const result = this.store.get(gameId);

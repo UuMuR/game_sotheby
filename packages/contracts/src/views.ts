@@ -34,9 +34,35 @@ export interface AuctionView {
   stolen?: boolean;
 }
 
+export interface RoundSettlementView {
+  round: 1 | 2 | 3 | 4;
+  rankings: readonly {
+    series: CollectionSeries;
+    count: number;
+    addedPrice: Money;
+  }[];
+  ledger: readonly {
+    playerId: string;
+    reason: 'COLLECTION_SALE' | 'STOLEN_FINE';
+    counterparty: 'BANK';
+    before: Money;
+    delta: Money;
+    after: Money;
+    cardId: string;
+  }[];
+}
+
+export interface FinalStandingView {
+  playerId: string;
+  cash: Money;
+  place: number;
+  winner: boolean;
+}
+
 export interface PlayerGameView {
   roomId: string;
   gameId: string;
+  status: 'IN_PROGRESS' | 'ROUND_SETTLEMENT' | 'FINISHED';
   stateVersion: number;
   eventSequence: number;
   round: 1 | 2 | 3 | 4;
@@ -46,4 +72,6 @@ export interface PlayerGameView {
   seriesCounts: Readonly<Record<CollectionSeries, number>>;
   cumulativeSeriesPrices: Readonly<Record<CollectionSeries, Money>>;
   auction: AuctionView | null;
+  lastRoundSettlement?: RoundSettlementView;
+  finalStandings?: readonly FinalStandingView[];
 }

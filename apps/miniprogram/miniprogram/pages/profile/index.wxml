@@ -3,4 +3,5 @@
   <input maxlength="12" value="{{nickname}}" bindinput="onNicknameInput" placeholder="输入游戏昵称"/>
   <text wx:if="{{error}}" class="error">{{error}}</text>
   <button class="primary" bindtap="onSave">保存并继续</button>
+  <button class="secondary" bindtap="onOpenHistory">查看历史对局</button>
 </view>

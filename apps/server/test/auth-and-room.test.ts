@@ -167,3 +167,21 @@ describe('active game recovery endpoint', () => {
     await app.close();
   });
 });
+
+describe('room detail endpoint', () => {
+  it('returns the room to a seated player and rejects outsiders', async () => {
+    const store = new InMemoryLobbyStore();
+    const app = buildApp({ wechatClient, store, randomCode: () => '888888' });
+    const owner = await login(app, 'detail-owner');
+    const outsider = await login(app, 'detail-outsider');
+    const room = (await app.inject({ method: 'POST', url: '/v1/rooms', headers: { authorization: `Bearer ${owner.token}` } })).json<{ id: string; code: string }>();
+
+    const allowed = await app.inject({ method: 'GET', url: `/v1/rooms/${room.id}`, headers: { authorization: `Bearer ${owner.token}` } });
+    expect(allowed.statusCode).toBe(200);
+    expect(allowed.json()).toMatchObject({ id: room.id, code: '888888' });
+
+    const denied = await app.inject({ method: 'GET', url: `/v1/rooms/${room.id}`, headers: { authorization: `Bearer ${outsider.token}` } });
+    expect(denied.statusCode).toBe(403);
+    await app.close();
+  });
+});
