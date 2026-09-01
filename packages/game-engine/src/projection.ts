@@ -10,7 +10,10 @@ function publicPlayer(state: GameState, player: PlayerState): PublicPlayerView {
     seat: player.seat,
     online: player.online,
     isHost: player.id === state.hostPlayerId,
-    isActing: player.id === state.auction?.actingPlayerId,
+    isActing:
+      state.auction !== null &&
+      'actingPlayerId' in state.auction &&
+      player.id === state.auction.actingPlayerId,
     purchasedCards: player.purchasedCards,
     handCount: player.hand.length,
   };
@@ -25,27 +28,22 @@ function selfPlayer(state: GameState, player: PlayerState): SelfPlayerView {
 }
 
 function projectAuction(auction: ActiveAuctionState | null, playerId: string): AuctionView | null {
-  if (auction === null) {
-    return null;
-  }
+  if (auction === null) return null;
 
   const view: AuctionView = {
     type: auction.type,
-    cardIds: auction.cardIds,
+    cardIds: auction.cards.map((card) => card.id),
   };
-
-  if (auction.actingPlayerId !== undefined) view.actingPlayerId = auction.actingPlayerId;
-  if (auction.currentPrice !== undefined) view.currentPrice = auction.currentPrice;
-  if (auction.currentBidderId !== undefined) view.currentBidderId = auction.currentBidderId;
-  if (auction.expiresAt !== undefined) view.expiresAt = auction.expiresAt;
-
-  if (auction.bids !== undefined) {
+  if ('actingPlayerId' in auction && auction.actingPlayerId !== undefined) view.actingPlayerId = auction.actingPlayerId;
+  if ('currentPrice' in auction) view.currentPrice = auction.currentPrice;
+  if ('currentBidderId' in auction && auction.currentBidderId !== undefined) view.currentBidderId = auction.currentBidderId;
+  if ('expiresAt' in auction && auction.expiresAt !== undefined) view.expiresAt = auction.expiresAt;
+  if (auction.type === 'SEALED_BID') {
     view.submittedPlayerIds = Object.keys(auction.bids);
     const ownBid = auction.bids[playerId];
     if (ownBid !== undefined) view.ownBid = ownBid;
-    if (auction.revealed === true) view.revealedBids = auction.bids;
+    if (auction.revealed) view.revealedBids = auction.bids;
   }
-
   return view;
 }
 
