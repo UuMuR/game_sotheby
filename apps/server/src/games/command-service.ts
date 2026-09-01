@@ -66,6 +66,12 @@ export class CommandService {
     this.broadcaster = new GameBroadcaster(dependencies.connections);
   }
 
+  async hostPlayerId(gameId: string): Promise<string> {
+    const state = this.dependencies.gameStore.get(gameId);
+    if (!state) throw new Error('GAME_NOT_FOUND');
+    return state.hostPlayerId;
+  }
+
   async execute(envelope: ClientCommandEnvelope, now: Date): Promise<CommandResponse> {
     return this.dependencies.roomLock.runExclusive(envelope.roomId, async () => {
       const duplicate = this.dependencies.gameStore.findCommandResult(envelope.requestId);

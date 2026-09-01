@@ -11,27 +11,24 @@ export interface ConnectionRegistry {
 }
 
 export class InMemoryConnectionRegistry implements ConnectionRegistry {
-  private readonly connections = new Map<string, Map<string, Set<SocketConnection>>>();
+  private readonly connections = new Map<string, Map<string, SocketConnection>>();
 
   add(gameId: string, playerId: string, socket: SocketConnection): () => void {
-    const gameConnections = this.connections.get(gameId) ?? new Map<string, Set<SocketConnection>>();
-    const playerConnections = gameConnections.get(playerId) ?? new Set<SocketConnection>();
-    playerConnections.add(socket);
-    gameConnections.set(playerId, playerConnections);
+    const gameConnections = this.connections.get(gameId) ?? new Map<string, SocketConnection>();
+    const previous = gameConnections.get(playerId);
+    if (previous && previous !== socket) previous.close(4001, 'REPLACED_BY_RECONNECT');
+    gameConnections.set(playerId, socket);
     this.connections.set(gameId, gameConnections);
 
     return () => {
-      playerConnections.delete(socket);
-      if (playerConnections.size === 0) gameConnections.delete(playerId);
+      if (gameConnections.get(playerId) === socket) gameConnections.delete(playerId);
       if (gameConnections.size === 0) this.connections.delete(gameId);
     };
   }
 
   send(gameId: string, playerId: string, message: unknown): void {
-    const encoded = JSON.stringify(message);
-    for (const socket of this.connections.get(gameId)?.get(playerId) ?? []) {
-      if (socket.readyState === 1) socket.send(encoded);
-    }
+    const socket = this.connections.get(gameId)?.get(playerId);
+    if (socket?.readyState === 1) socket.send(JSON.stringify(message));
   }
 
   connectedPlayerIds(gameId: string): readonly string[] {
