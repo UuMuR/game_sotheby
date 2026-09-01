@@ -7,11 +7,17 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@fastify/websocket": "^11.3.0",
     "@sotheby/contracts": "workspace:*",
     "@sotheby/game-engine": "workspace:*",
     "drizzle-orm": "^0.45.2",
     "fastify": "^5.12.1",
+    "ioredis": "^6.0.0",
     "mysql2": "^3.24.2",
+    "ws": "^8.21.3",
     "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.18.1"
   }
 }
