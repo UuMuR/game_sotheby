@@ -436,7 +436,7 @@ function respondJointInvite(
     );
     return accept(
       state,
-      settled.state,
+      finalizeAuctionState(settled.state),
       timedOut ? null : command.playerId,
       'JOINT_AUCTION_UNMATCHED',
       { timedOut },

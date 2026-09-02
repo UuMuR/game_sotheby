@@ -115,3 +115,25 @@ describe('joint auctions', () => {
     expect(newBuys.state.players.p2?.cash).toBe(144);
   });
 });
+
+describe('joint auction terminal settlement', () => {
+  it('creates the round settlement when an unmatched joint card exhausts all hands', () => {
+    const { joint } = cardsForJoint();
+    const initial = makeState();
+    let state: GameState = {
+      ...initial,
+      players: {
+        p1: { ...initial.players.p1!, hand: [joint] },
+        p2: { ...initial.players.p2!, hand: [] },
+        p3: { ...initial.players.p3!, hand: [] },
+      },
+    };
+    state = playJoint(state).state;
+    state = succeed(handleCommand(state, command(state, 'p1', 'INVITE_JOINT_PLAYER', {}), new Date('2026-09-01T08:00:01.000Z'))).state;
+    state = succeed(handleCommand(state, command(state, 'p2', 'RESPOND_JOINT_INVITE', { accept: false }), new Date('2026-09-01T08:00:02.000Z'))).state;
+    state = succeed(handleCommand(state, command(state, 'p3', 'RESPOND_JOINT_INVITE', { accept: false }), new Date('2026-09-01T08:00:03.000Z'))).state;
+
+    expect(state.status).toBe('ROUND_SETTLEMENT');
+    expect(state.lastRoundSettlement?.round).toBe(1);
+  });
+});
