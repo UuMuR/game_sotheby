@@ -11,62 +11,62 @@ function statusFor(code: string): number {
   return 400;
 }
 
-function playerOr401(request: FastifyRequest, sessionService: SessionService) {
-  return sessionService.authenticate(bearerToken(request));
+async function playerOr401(request: FastifyRequest, sessionService: SessionService) {
+  return await sessionService.authenticate(bearerToken(request));
 }
 
 export function registerRoomRoutes(app: FastifyInstance, roomService: RoomService, sessionService: SessionService): void {
   app.get('/v1/me/active-game', async (request, reply) => {
-    const player = playerOr401(request, sessionService);
+    const player = await playerOr401(request, sessionService);
     if (!player) return reply.code(401).send({ code: 'UNAUTHORIZED' });
-    const room = roomService.findActiveRoom(player.id);
+    const room = await roomService.findActiveRoom(player.id);
     return { gameId: room?.status === 'IN_GAME' ? room.gameId : undefined };
   });
 
   app.get('/v1/rooms/:id', async (request, reply) => {
-    const player = playerOr401(request, sessionService);
+    const player = await playerOr401(request, sessionService);
     if (!player) return reply.code(401).send({ code: 'UNAUTHORIZED' });
     try {
-      return roomService.getForPlayer((request.params as { id: string }).id, player.id);
+      return await roomService.getForPlayer((request.params as { id: string }).id, player.id);
     } catch (error) {
       return reply.code(statusFor((error as Error).message)).send({ code: (error as Error).message });
     }
   });
 
   app.post('/v1/rooms', async (request, reply) => {
-    const player = playerOr401(request, sessionService);
+    const player = await playerOr401(request, sessionService);
     if (!player) return reply.code(401).send({ code: 'UNAUTHORIZED' });
-    try { return reply.code(201).send(roomService.create(player)); }
+    try { return reply.code(201).send(await roomService.create(player)); }
     catch (error) { return reply.code(statusFor((error as Error).message)).send({ code: (error as Error).message }); }
   });
 
   app.post('/v1/rooms/:code/join', async (request, reply) => {
-    const player = playerOr401(request, sessionService);
+    const player = await playerOr401(request, sessionService);
     if (!player) return reply.code(401).send({ code: 'UNAUTHORIZED' });
-    try { return roomService.join((request.params as { code: string }).code, player); }
+    try { return await roomService.join((request.params as { code: string }).code, player); }
     catch (error) { return reply.code(statusFor((error as Error).message)).send({ code: (error as Error).message }); }
   });
 
   app.post('/v1/rooms/:id/ready', async (request, reply) => {
-    const player = playerOr401(request, sessionService);
+    const player = await playerOr401(request, sessionService);
     if (!player) return reply.code(401).send({ code: 'UNAUTHORIZED' });
     const body = request.body as { ready?: boolean };
-    try { return roomService.setReady((request.params as { id: string }).id, player.id, body.ready === true); }
+    try { return await roomService.setReady((request.params as { id: string }).id, player.id, body.ready === true); }
     catch (error) { return reply.code(statusFor((error as Error).message)).send({ code: (error as Error).message }); }
   });
 
   app.post('/v1/rooms/:id/start', async (request, reply) => {
-    const player = playerOr401(request, sessionService);
+    const player = await playerOr401(request, sessionService);
     if (!player) return reply.code(401).send({ code: 'UNAUTHORIZED' });
-    try { return roomService.start((request.params as { id: string }).id, player.id); }
+    try { return await roomService.start((request.params as { id: string }).id, player.id); }
     catch (error) { return reply.code(statusFor((error as Error).message)).send({ code: (error as Error).message }); }
   });
 
   app.delete('/v1/rooms/:id/players/:playerId', async (request, reply) => {
-    const actor = playerOr401(request, sessionService);
+    const actor = await playerOr401(request, sessionService);
     if (!actor) return reply.code(401).send({ code: 'UNAUTHORIZED' });
     const params = request.params as { id: string; playerId: string };
-    try { return roomService.removePlayer(params.id, actor.id, params.playerId) ?? reply.code(204).send(); }
+    try { return (await roomService.removePlayer(params.id, actor.id, params.playerId)) ?? reply.code(204).send(); }
     catch (error) { return reply.code(statusFor((error as Error).message)).send({ code: (error as Error).message }); }
   });
 }

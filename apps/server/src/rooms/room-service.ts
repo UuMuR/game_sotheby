@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 
 import { initializeGame, loadPlaceholderCatalog, type GameState } from '@sotheby/game-engine';
 
-import type { AuthStore, PlayerProfile, Session } from '../auth/session-service.ts';
+import type { AuthStore, MaybePromise, PlayerProfile, Session } from '../auth/session-service.ts';
 
 export type RoomStatus = 'WAITING' | 'IN_GAME' | 'FINISHED' | 'DISBANDED';
 
@@ -24,13 +24,13 @@ export interface Room {
 }
 
 export interface LobbyStore {
-  getRoom(roomId: string): Room | null;
-  getRoomByCode(code: string): Room | null;
-  saveRoom(room: Room): void;
-  deleteRoom(roomId: string): void;
-  findActiveRoomByPlayer(playerId: string): Room | null;
-  saveGame(game: GameState): void;
-  getGame(gameId: string): GameState | null;
+  getRoom(roomId: string): MaybePromise<Room | null>;
+  getRoomByCode(code: string): MaybePromise<Room | null>;
+  saveRoom(room: Room): MaybePromise<void>;
+  deleteRoom(roomId: string): MaybePromise<void>;
+  findActiveRoomByPlayer(playerId: string): MaybePromise<Room | null>;
+  saveGame(game: GameState): MaybePromise<void>;
+  getGame(gameId: string): MaybePromise<GameState | null>;
 }
 
 export class InMemoryLobbyStore implements LobbyStore, AuthStore {
@@ -77,12 +77,12 @@ export class RoomService {
     private readonly idFactory: () => string = randomUUID,
   ) {}
 
-  findActiveRoom(playerId: string): Room | null {
-    return this.store.findActiveRoomByPlayer(playerId);
+  async findActiveRoom(playerId: string): Promise<Room | null> {
+    return await this.store.findActiveRoomByPlayer(playerId);
   }
 
-  getForPlayer(roomId: string, playerId: string): Room {
-    const room = this.store.getRoom(roomId);
+  async getForPlayer(roomId: string, playerId: string): Promise<Room> {
+    const room = await this.store.getRoom(roomId);
     if (!room) throw new Error('ROOM_NOT_FOUND');
     if (!room.players.some((player) => player.id === playerId)) {
       throw new Error('PLAYER_NOT_IN_ROOM');
@@ -90,59 +90,59 @@ export class RoomService {
     return room;
   }
 
-  markFinished(roomId: string): void {
-    const room = this.store.getRoom(roomId);
+  async markFinished(roomId: string): Promise<void> {
+    const room = await this.store.getRoom(roomId);
     if (!room) return;
-    this.store.saveRoom({ ...room, status: 'FINISHED' });
+    await this.store.saveRoom({ ...room, status: 'FINISHED' });
   }
 
-  create(owner: PlayerProfile): Room {
-    this.assertNotInActiveRoom(owner.id);
+  async create(owner: PlayerProfile): Promise<Room> {
+    await this.assertNotInActiveRoom(owner.id);
     let code = this.randomCode();
-    for (let attempt = 0; attempt < 20 && this.store.getRoomByCode(code); attempt += 1) code = this.randomCode();
-    if (this.store.getRoomByCode(code)) throw new Error('ROOM_CODE_EXHAUSTED');
+    for (let attempt = 0; attempt < 20 && await this.store.getRoomByCode(code); attempt += 1) code = this.randomCode();
+    if (await this.store.getRoomByCode(code)) throw new Error('ROOM_CODE_EXHAUSTED');
     if (!/^\d{6}$/.test(code)) throw new Error('INVALID_ROOM_CODE');
     const room: Room = { id: this.idFactory(), code, ownerPlayerId: owner.id, status: 'WAITING', players: [this.toRoomPlayer(owner, 0)] };
-    this.store.saveRoom(room);
+    await this.store.saveRoom(room);
     return room;
   }
 
-  join(code: string, player: PlayerProfile): Room {
-    const existing = this.store.getRoomByCode(code);
+  async join(code: string, player: PlayerProfile): Promise<Room> {
+    const existing = await this.store.getRoomByCode(code);
     if (!existing) throw new Error('ROOM_NOT_FOUND');
     if (existing.status !== 'WAITING') throw new Error('GAME_ALREADY_STARTED');
     if (existing.players.some((item) => item.id === player.id)) return existing;
-    this.assertNotInActiveRoom(player.id);
+    await this.assertNotInActiveRoom(player.id);
     if (existing.players.length >= 8) throw new Error('ROOM_FULL');
     const room = { ...existing, players: [...existing.players, this.toRoomPlayer(player, existing.players.length)] };
-    this.store.saveRoom(room);
+    await this.store.saveRoom(room);
     return room;
   }
 
-  setReady(roomId: string, playerId: string, ready: boolean): Room {
-    const room = this.requireWaitingRoom(roomId);
+  async setReady(roomId: string, playerId: string, ready: boolean): Promise<Room> {
+    const room = await this.requireWaitingRoom(roomId);
     if (room.ownerPlayerId === playerId) throw new Error('OWNER_DOES_NOT_READY');
     if (!room.players.some((player) => player.id === playerId)) throw new Error('PLAYER_NOT_IN_ROOM');
     const updated = { ...room, players: room.players.map((player) => player.id === playerId ? { ...player, ready } : player) };
-    this.store.saveRoom(updated);
+    await this.store.saveRoom(updated);
     return updated;
   }
 
-  removePlayer(roomId: string, actorPlayerId: string, targetPlayerId: string): Room | null {
-    const room = this.requireWaitingRoom(roomId);
+  async removePlayer(roomId: string, actorPlayerId: string, targetPlayerId: string): Promise<Room | null> {
+    const room = await this.requireWaitingRoom(roomId);
     const target = room.players.find((player) => player.id === targetPlayerId);
     if (!target) throw new Error('PLAYER_NOT_IN_ROOM');
     if (actorPlayerId !== targetPlayerId && actorPlayerId !== room.ownerPlayerId) throw new Error('NOT_ROOM_OWNER');
     const remaining = room.players.filter((player) => player.id !== targetPlayerId).map((player, seat) => ({ ...player, seat }));
-    if (remaining.length === 0) { this.store.deleteRoom(roomId); return null; }
+    if (remaining.length === 0) { await this.store.deleteRoom(roomId); return null; }
     const ownerPlayerId = targetPlayerId === room.ownerPlayerId ? remaining[0]!.id : room.ownerPlayerId;
     const updated = { ...room, ownerPlayerId, players: remaining };
-    this.store.saveRoom(updated);
+    await this.store.saveRoom(updated);
     return updated;
   }
 
-  start(roomId: string, actorPlayerId: string): Room {
-    const room = this.requireWaitingRoom(roomId);
+  async start(roomId: string, actorPlayerId: string): Promise<Room> {
+    const room = await this.requireWaitingRoom(roomId);
     if (room.ownerPlayerId !== actorPlayerId) throw new Error('NOT_ROOM_OWNER');
     if (room.players.length < 3 || room.players.length > 8) throw new Error('INVALID_PLAYER_COUNT');
     if (room.players.some((player) => player.id !== room.ownerPlayerId && !player.ready)) throw new Error('PLAYERS_NOT_READY');
@@ -166,20 +166,20 @@ export class RoomService {
       },
     });
     const started: Room = { ...room, status: 'IN_GAME', gameId };
-    this.store.saveGame(game);
-    this.store.saveRoom(started);
+    await this.store.saveGame(game);
+    await this.store.saveRoom(started);
     return started;
   }
 
-  private requireWaitingRoom(roomId: string): Room {
-    const room = this.store.getRoom(roomId);
+  private async requireWaitingRoom(roomId: string): Promise<Room> {
+    const room = await this.store.getRoom(roomId);
     if (!room) throw new Error('ROOM_NOT_FOUND');
     if (room.status !== 'WAITING') throw new Error('GAME_ALREADY_STARTED');
     return room;
   }
 
-  private assertNotInActiveRoom(playerId: string): void {
-    if (this.store.findActiveRoomByPlayer(playerId)) throw new Error('PLAYER_ALREADY_IN_ROOM');
+  private async assertNotInActiveRoom(playerId: string): Promise<void> {
+    if (await this.store.findActiveRoomByPlayer(playerId)) throw new Error('PLAYER_ALREADY_IN_ROOM');
   }
 
   private toRoomPlayer(player: PlayerProfile, seat: number): RoomPlayer {

@@ -13,15 +13,15 @@ export function registerAuthRoutes(app: FastifyInstance, sessionService: Session
     const body = request.body as { code?: string };
     if (!body.code) return reply.code(400).send({ code: 'INVALID_LOGIN_CODE' });
     const identity = await wechatClient.exchangeCode(body.code);
-    return sessionService.login(identity.openId);
+    return await sessionService.login(identity.openId);
   });
 
   app.post('/v1/profile', async (request, reply) => {
-    const player = sessionService.authenticate(bearerToken(request));
+    const player = await sessionService.authenticate(bearerToken(request));
     if (!player) return reply.code(401).send({ code: 'UNAUTHORIZED' });
     const body = request.body as { nickname?: string; avatarUrl?: string };
     try {
-      return sessionService.updateProfile(player.id, body.nickname ?? '', body.avatarUrl ?? '');
+      return await sessionService.updateProfile(player.id, body.nickname ?? '', body.avatarUrl ?? '');
     } catch (error) {
       if (error instanceof Error && error.message === 'INVALID_NICKNAME') return reply.code(400).send({ code: error.message });
       throw error;
@@ -29,11 +29,11 @@ export function registerAuthRoutes(app: FastifyInstance, sessionService: Session
   });
 
   app.patch('/v1/profile', async (request, reply) => {
-    const player = sessionService.authenticate(bearerToken(request));
+    const player = await sessionService.authenticate(bearerToken(request));
     if (!player) return reply.code(401).send({ code: 'UNAUTHORIZED' });
     const body = request.body as { nickname?: string; avatarUrl?: string };
     try {
-      return sessionService.updateProfile(player.id, body.nickname ?? '', body.avatarUrl ?? '');
+      return await sessionService.updateProfile(player.id, body.nickname ?? '', body.avatarUrl ?? '');
     } catch (error) {
       if (error instanceof Error && error.message === 'INVALID_NICKNAME') return reply.code(400).send({ code: error.message });
       throw error;
@@ -41,9 +41,9 @@ export function registerAuthRoutes(app: FastifyInstance, sessionService: Session
   });
 
   app.delete('/v1/account', async (request, reply) => {
-    const player = sessionService.authenticate(bearerToken(request));
+    const player = await sessionService.authenticate(bearerToken(request));
     if (!player) return reply.code(401).send({ code: 'UNAUTHORIZED' });
-    sessionService.deleteAccount(player.id);
+    await sessionService.deleteAccount(player.id);
     return reply.code(204).send();
   });
 }

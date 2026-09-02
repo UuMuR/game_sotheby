@@ -66,6 +66,86 @@ describe('automatic result capture', () => {
     expect(results.get('game-finish')?.finalStandings).toHaveLength(3);
     expect(results.get('game-finish')?.roomCode).toBe('999999');
   });
+
+  it('repairs a missing finished result when retrying an accepted command', async () => {
+    const storedResults = new InMemoryResultStore();
+    let saveAttempts = 0;
+    const resultStore = {
+      save(result: Parameters<InMemoryResultStore['save']>[0]) {
+        saveAttempts += 1;
+        if (saveAttempts === 1) throw new Error('RESULT_WRITE_FAILED');
+        storedResults.save(result);
+      },
+      get(gameId: string) { return storedResults.get(gameId); },
+      listForPlayer(playerId: string) { return storedResults.listForPlayer(playerId); },
+    };
+    const { CommandService, InMemoryGameSessionStore } = await import('../src/games/command-service.ts');
+    const { InMemoryConnectionRegistry } = await import('../src/games/connection-registry.ts');
+    const { InMemoryRoomLock } = await import('../src/games/room-lock.ts');
+    const { initializeGame, loadPlaceholderCatalog } = await import('@sotheby/game-engine');
+    const state = initializeGame({
+      roomId: 'room-result-repair', gameId: 'game-result-repair', catalog: loadPlaceholderCatalog(),
+      randomSource: { next: () => 0, integer: () => 0, shuffle: (values) => [...values] },
+      players: ['p1','p2','p3'].map((id) => ({ id, nickname: id, avatarUrl: `/${id}.png` })),
+    });
+    const games = new InMemoryGameSessionStore();
+    games.seed({ ...state, round: 4, status: 'ROUND_SETTLEMENT', lastRoundSettlement: { round: 4, rankings: [], ledger: [] } });
+    const finishedRooms: string[] = [];
+    const service = new CommandService({
+      gameStore: games,
+      roomLock: new InMemoryRoomLock(),
+      connections: new InMemoryConnectionRegistry(),
+      resultStore,
+      roomCodeFor: () => '999997',
+      onGameFinished: (finished) => { finishedRooms.push(finished.roomId); },
+    });
+    const envelope = { type: 'COMMAND' as const, requestId: 'finish-result-repair', roomId: state.roomId, gameId: state.gameId, playerId: 'p1', stateVersion: 1, command: { type: 'ADVANCE_AFTER_SETTLEMENT' as const, payload: {} } };
+
+    await expect(service.execute(envelope, new Date('2026-09-01T12:00:00.000Z'))).rejects.toThrow('RESULT_WRITE_FAILED');
+    const retried = await service.execute(envelope, new Date('2026-09-01T12:00:01.000Z'));
+
+    expect(retried.type).toBe('COMMAND_ACCEPTED');
+    expect(saveAttempts).toBe(2);
+    expect(storedResults.get(state.gameId)?.roomCode).toBe('999997');
+    expect(finishedRooms).toEqual(['room-result-repair']);
+  });
+
+
+  it('retries the room finish hook when the result was stored before the hook failed', async () => {
+    const results = new InMemoryResultStore();
+    const { CommandService, InMemoryGameSessionStore } = await import('../src/games/command-service.ts');
+    const { InMemoryConnectionRegistry } = await import('../src/games/connection-registry.ts');
+    const { InMemoryRoomLock } = await import('../src/games/room-lock.ts');
+    const { initializeGame, loadPlaceholderCatalog } = await import('@sotheby/game-engine');
+    const state = initializeGame({
+      roomId: 'room-hook-repair', gameId: 'game-hook-repair', catalog: loadPlaceholderCatalog(),
+      randomSource: { next: () => 0, integer: () => 0, shuffle: (values) => [...values] },
+      players: ['p1','p2','p3'].map((id) => ({ id, nickname: id, avatarUrl: `/${id}.png` })),
+    });
+    const games = new InMemoryGameSessionStore();
+    games.seed({ ...state, round: 4, status: 'ROUND_SETTLEMENT', lastRoundSettlement: { round: 4, rankings: [], ledger: [] } });
+    let hookAttempts = 0;
+    const service = new CommandService({
+      gameStore: games,
+      roomLock: new InMemoryRoomLock(),
+      connections: new InMemoryConnectionRegistry(),
+      resultStore: results,
+      roomCodeFor: () => '999996',
+      onGameFinished: () => {
+        hookAttempts += 1;
+        if (hookAttempts === 1) throw new Error('ROOM_FINISH_FAILED');
+      },
+    });
+    const envelope = { type: 'COMMAND' as const, requestId: 'finish-hook-repair', roomId: state.roomId, gameId: state.gameId, playerId: 'p1', stateVersion: 1, command: { type: 'ADVANCE_AFTER_SETTLEMENT' as const, payload: {} } };
+
+    await expect(service.execute(envelope, new Date('2026-09-01T12:00:00.000Z'))).rejects.toThrow('ROOM_FINISH_FAILED');
+    const retried = await service.execute(envelope, new Date('2026-09-01T12:00:01.000Z'));
+
+    expect(retried.type).toBe('COMMAND_ACCEPTED');
+    expect(results.get(state.gameId)).not.toBeNull();
+    expect(hookAttempts).toBe(2);
+  });
+
 });
 
 describe('room lifecycle after final result', () => {

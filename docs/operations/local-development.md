@@ -20,9 +20,10 @@ pnpm verify:mvp
 
 ```bash
 pnpm dev:deps
+pnpm db:migrate
 ```
 
-当前执行环境没有 Docker，因此仓库内的 MySQL/Redis 容器集成测试须在开发者机器或 CI 中运行。纯规则、HTTP、WebSocket、恢复语义和小程序 ViewModel 测试不依赖 Docker。
+迁移脚本读取 `DATABASE_URL` 并执行 `0001_initial.sql`。当前执行环境没有 Docker，因此仓库内的 MySQL/Redis 容器集成测试须在开发者机器或 CI 中运行。纯规则、HTTP、WebSocket、恢复语义和小程序 ViewModel 测试不依赖 Docker。
 
 ## 启动服务端
 

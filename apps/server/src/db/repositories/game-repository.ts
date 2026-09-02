@@ -8,6 +8,8 @@ export interface AppendEventsAndSnapshotInput {
   nextState: GameState;
   events: readonly EngineEvent[];
   writeSnapshot: boolean;
+  requestId?: string;
+  commandResult?: unknown;
 }
 
 export interface RecoveredGame {
@@ -115,12 +117,13 @@ export class MySqlGameRepository implements GameRepository {
         await connection.execute(
           `INSERT INTO game_events
            (id, game_id, room_id, sequence, request_id, actor_player_id, type, rules_version, payload, occurred_at)
-           VALUES (?, ?, ?, ?, NULL, ?, ?, ?, ?, ?)`,
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             gameEvent.eventId,
             gameEvent.gameId,
             gameEvent.roomId,
             gameEvent.sequence,
+            input.requestId ?? null,
             gameEvent.actorPlayerId,
             gameEvent.type,
             gameEvent.rulesVersion,
@@ -146,6 +149,14 @@ export class MySqlGameRepository implements GameRepository {
             JSON.stringify(input.nextState),
             new Date(),
           ],
+        );
+      }
+      if (input.requestId !== undefined && input.commandResult !== undefined) {
+        await connection.execute(
+          `INSERT INTO command_results (request_id, game_id, result, created_at)
+           VALUES (?, ?, ?, ?)
+           ON DUPLICATE KEY UPDATE request_id = request_id`,
+          [input.requestId, input.gameId, JSON.stringify(input.commandResult), new Date()],
         );
       }
       await connection.commit();

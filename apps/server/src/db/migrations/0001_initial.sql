@@ -1,4 +1,4 @@
-CREATE TABLE `players` (
+CREATE TABLE IF NOT EXISTS `players` (
   `id` varchar(36) NOT NULL,
   `wechat_open_id` varchar(128) NOT NULL,
   `nickname` varchar(48) NOT NULL,
@@ -10,7 +10,7 @@ CREATE TABLE `players` (
   UNIQUE KEY `players_wechat_open_id_unique` (`wechat_open_id`)
 );
 
-CREATE TABLE `sessions` (
+CREATE TABLE IF NOT EXISTS `sessions` (
   `id` varchar(36) NOT NULL,
   `player_id` varchar(36) NOT NULL,
   `token_hash` varchar(128) NOT NULL,
@@ -21,7 +21,7 @@ CREATE TABLE `sessions` (
   KEY `sessions_player_idx` (`player_id`)
 );
 
-CREATE TABLE `rooms` (
+CREATE TABLE IF NOT EXISTS `rooms` (
   `id` varchar(36) NOT NULL,
   `code` varchar(6) NOT NULL,
   `owner_player_id` varchar(36) NOT NULL,
@@ -32,7 +32,7 @@ CREATE TABLE `rooms` (
   UNIQUE KEY `rooms_code_unique` (`code`)
 );
 
-CREATE TABLE `room_players` (
+CREATE TABLE IF NOT EXISTS `room_players` (
   `room_id` varchar(36) NOT NULL,
   `player_id` varchar(36) NOT NULL,
   `seat` int NOT NULL,
@@ -43,7 +43,7 @@ CREATE TABLE `room_players` (
   KEY `room_players_player_idx` (`player_id`)
 );
 
-CREATE TABLE `games` (
+CREATE TABLE IF NOT EXISTS `games` (
   `id` varchar(36) NOT NULL,
   `room_id` varchar(36) NOT NULL,
   `status` enum('IN_PROGRESS','ROUND_SETTLEMENT','FINISHED') NOT NULL DEFAULT 'IN_PROGRESS',
@@ -57,7 +57,7 @@ CREATE TABLE `games` (
   KEY `games_status_idx` (`status`)
 );
 
-CREATE TABLE `game_players` (
+CREATE TABLE IF NOT EXISTS `game_players` (
   `game_id` varchar(36) NOT NULL,
   `player_id` varchar(36) NOT NULL,
   `seat` int NOT NULL,
@@ -70,7 +70,7 @@ CREATE TABLE `game_players` (
   UNIQUE KEY `game_players_game_seat_unique` (`game_id`, `seat`)
 );
 
-CREATE TABLE `game_events` (
+CREATE TABLE IF NOT EXISTS `game_events` (
   `id` varchar(64) NOT NULL,
   `game_id` varchar(36) NOT NULL,
   `room_id` varchar(36) NOT NULL,
@@ -86,7 +86,7 @@ CREATE TABLE `game_events` (
   KEY `game_events_game_idx` (`game_id`)
 );
 
-CREATE TABLE `game_snapshots` (
+CREATE TABLE IF NOT EXISTS `game_snapshots` (
   `id` varchar(64) NOT NULL,
   `game_id` varchar(36) NOT NULL,
   `state_version` bigint unsigned NOT NULL,
@@ -98,7 +98,7 @@ CREATE TABLE `game_snapshots` (
   KEY `game_snapshots_game_sequence_idx` (`game_id`, `event_sequence`)
 );
 
-CREATE TABLE `command_results` (
+CREATE TABLE IF NOT EXISTS `command_results` (
   `request_id` varchar(64) NOT NULL,
   `game_id` varchar(36) NOT NULL,
   `result` json NOT NULL,
@@ -108,7 +108,7 @@ CREATE TABLE `command_results` (
   KEY `command_results_game_idx` (`game_id`)
 );
 
-CREATE TABLE `game_results` (
+CREATE TABLE IF NOT EXISTS `game_results` (
   `game_id` varchar(36) NOT NULL,
   `result` json NOT NULL,
   `finished_at` timestamp(3) NOT NULL,

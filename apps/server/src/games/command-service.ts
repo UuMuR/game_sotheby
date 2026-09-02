@@ -9,6 +9,8 @@ import { GameBroadcaster } from './broadcaster.ts';
 import type { ConnectionRegistry } from './connection-registry.ts';
 import type { RoomLock } from './room-lock.ts';
 import type { DeadlineStore } from './deadline-store.ts';
+import type { MaybePromise } from '../auth/session-service.ts';
+import { supportsTransactionalCommit } from '../db/persistent-game-session-store.ts';
 import type { ResultStore } from '../results/result-service.ts';
 import { ResultService } from '../results/result-service.ts';
 
@@ -37,16 +39,16 @@ export type CommandResponse =
     };
 
 export interface GameSessionStore {
-  get(gameId: string): GameState | null;
-  save(state: GameState): void;
-  findCommandResult(requestId: string): CommandResponse | null;
-  saveCommandResult(requestId: string, result: CommandResponse): void;
+  get(gameId: string): MaybePromise<GameState | null>;
+  save(state: GameState): MaybePromise<void>;
+  findCommandResult(requestId: string): MaybePromise<CommandResponse | null>;
+  saveCommandResult(requestId: string, result: CommandResponse): MaybePromise<void>;
 }
 
 
 export interface GameStateBackingStore {
-  getGame(gameId: string): GameState | null;
-  saveGame(state: GameState): void;
+  getGame(gameId: string): MaybePromise<GameState | null>;
+  saveGame(state: GameState): MaybePromise<void>;
 }
 
 export class BackingGameSessionStore implements GameSessionStore {
@@ -54,8 +56,8 @@ export class BackingGameSessionStore implements GameSessionStore {
 
   constructor(private readonly backing: GameStateBackingStore) {}
 
-  get(gameId: string): GameState | null { return this.backing.getGame(gameId); }
-  save(state: GameState): void { this.backing.saveGame(state); }
+  async get(gameId: string): Promise<GameState | null> { return await this.backing.getGame(gameId); }
+  async save(state: GameState): Promise<void> { await this.backing.saveGame(state); }
   findCommandResult(requestId: string): CommandResponse | null {
     return structuredClone(this.results.get(requestId) ?? null);
   }
@@ -79,6 +81,7 @@ export class InMemoryGameSessionStore implements GameSessionStore {
 
 export class CommandService {
   private readonly broadcaster: GameBroadcaster;
+  private readonly completedFinishedGameSideEffects = new Set<string>();
 
   constructor(
     private readonly dependencies: {
@@ -86,7 +89,7 @@ export class CommandService {
       roomLock: RoomLock;
       connections: ConnectionRegistry;
       resultStore?: ResultStore;
-      roomCodeFor?: (roomId: string) => string;
+      roomCodeFor?: (roomId: string) => MaybePromise<string>;
       deadlineStore?: DeadlineStore;
       onGameFinished?: (state: GameState) => void | Promise<void>;
     },
@@ -95,17 +98,25 @@ export class CommandService {
   }
 
   async hostPlayerId(gameId: string): Promise<string> {
-    const state = this.dependencies.gameStore.get(gameId);
+    const state = await this.dependencies.gameStore.get(gameId);
     if (!state) throw new Error('GAME_NOT_FOUND');
     return state.hostPlayerId;
   }
 
   async execute(envelope: ClientCommandEnvelope, now: Date): Promise<CommandResponse> {
     return this.dependencies.roomLock.runExclusive(envelope.roomId, async () => {
-      const duplicate = this.dependencies.gameStore.findCommandResult(envelope.requestId);
-      if (duplicate) return duplicate;
+      const duplicate = await this.dependencies.gameStore.findCommandResult(envelope.requestId);
+      if (duplicate) {
+        if (duplicate.type === 'COMMAND_ACCEPTED' && duplicate.state.status === 'FINISHED') {
+          const finishedState = await this.dependencies.gameStore.get(envelope.gameId);
+          if (finishedState?.status === 'FINISHED') {
+            await this.completeFinishedGameSideEffects(finishedState, now);
+          }
+        }
+        return duplicate;
+      }
 
-      const state = this.dependencies.gameStore.get(envelope.gameId);
+      const state = await this.dependencies.gameStore.get(envelope.gameId);
       if (!state || state.roomId !== envelope.roomId || !state.players[envelope.playerId]) {
         throw new Error('GAME_NOT_FOUND');
       }
@@ -119,28 +130,36 @@ export class CommandService {
       const result = handleCommand(state, command, now);
       let response: CommandResponse;
       if (result.ok) {
-        this.dependencies.gameStore.save(result.state);
-        if (this.dependencies.deadlineStore) {
-          for (const scheduledDeadline of result.scheduledDeadlines) {
-            await this.dependencies.deadlineStore.schedule(scheduledDeadline);
-          }
-        }
-        if (result.state.status === 'FINISHED' && this.dependencies.resultStore) {
-          new ResultService(this.dependencies.resultStore).saveFinishedGame(
-            result.state,
-            this.dependencies.roomCodeFor?.(result.state.roomId) ?? result.state.roomId,
-            now,
-          );
-        }
-        if (result.state.status === 'FINISHED') {
-          await this.dependencies.onGameFinished?.(result.state);
-        }
         response = {
           type: 'COMMAND_ACCEPTED',
           requestId: envelope.requestId,
           state: projectForPlayer(result.state, envelope.playerId),
           events: result.events,
         };
+        if (supportsTransactionalCommit(this.dependencies.gameStore)) {
+          await this.dependencies.gameStore.commit(
+            {
+              gameId: result.state.gameId,
+              expectedStateVersion: state.stateVersion,
+              nextState: result.state,
+              events: result.events,
+              writeSnapshot: true,
+            },
+            envelope.requestId,
+            response,
+          );
+        } else {
+          await this.dependencies.gameStore.save(result.state);
+          await this.dependencies.gameStore.saveCommandResult(envelope.requestId, response);
+        }
+        if (this.dependencies.deadlineStore) {
+          for (const scheduledDeadline of result.scheduledDeadlines) {
+            await this.dependencies.deadlineStore.schedule(scheduledDeadline);
+          }
+        }
+        if (result.state.status === 'FINISHED') {
+          await this.completeFinishedGameSideEffects(result.state, now);
+        }
         this.broadcaster.broadcastState(result.state);
       } else {
         response = {
@@ -150,8 +169,23 @@ export class CommandService {
           state: projectForPlayer(result.state, envelope.playerId),
         };
       }
-      this.dependencies.gameStore.saveCommandResult(envelope.requestId, response);
+      if (!result.ok) {
+        await this.dependencies.gameStore.saveCommandResult(envelope.requestId, response);
+      }
       return response;
     });
+  }
+
+  private async completeFinishedGameSideEffects(state: GameState, now: Date): Promise<void> {
+    if (this.completedFinishedGameSideEffects.has(state.gameId)) return;
+    if (this.dependencies.resultStore) {
+      await new ResultService(this.dependencies.resultStore).saveFinishedGame(
+        state,
+        (await this.dependencies.roomCodeFor?.(state.roomId)) ?? state.roomId,
+        now,
+      );
+    }
+    await this.dependencies.onGameFinished?.(state);
+    this.completedFinishedGameSideEffects.add(state.gameId);
   }
 }

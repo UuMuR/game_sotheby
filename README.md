@@ -18,7 +18,7 @@ pnpm install --ignore-scripts
 pnpm verify:mvp
 ```
 
-本地 MySQL/Redis 可通过 `pnpm dev:deps` 启动；需要 Docker Desktop。详细步骤见 `docs/operations/local-development.md`。
+本地 MySQL/Redis 可通过 `pnpm dev:deps` 启动，随后执行 `pnpm db:migrate`；需要 Docker Desktop。详细步骤见 `docs/operations/local-development.md`。
 
 ## 当前素材
 

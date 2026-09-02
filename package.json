@@ -15,7 +15,8 @@
     "verify:mvp": "node scripts/verify-mvp.mjs",
     "build:server": "node_modules/.bin/esbuild apps/server/src/server.ts --bundle --platform=node --format=esm --target=node22 --outfile=apps/server/dist/server.js --external:fastify --external:@fastify/websocket --external:ioredis --external:mysql2 --external:mysql2/* --external:drizzle-orm --external:drizzle-orm/* --external:ws --external:zod",
     "mini:preview": "node scripts/miniprogram-ci.mjs preview",
-    "mini:upload": "node scripts/miniprogram-ci.mjs upload"
+    "mini:upload": "node scripts/miniprogram-ci.mjs upload",
+    "db:migrate": "node scripts/migrate-database.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

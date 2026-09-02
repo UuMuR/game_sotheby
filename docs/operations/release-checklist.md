@@ -4,7 +4,7 @@
 
 - [ ] `pnpm install --frozen-lockfile --ignore-scripts`
 - [ ] `pnpm verify:mvp`
-- [ ] MySQL 迁移可在空测试库执行
+- [ ] `pnpm db:migrate` 可在空测试库执行
 - [ ] Redis 锁与截止队列真实集成测试通过
 - [ ] 服务端容器健康检查通过
 - [ ] 小程序体验版构建成功

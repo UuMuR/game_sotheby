@@ -1,5 +1,7 @@
 import type { GameState } from '@sotheby/game-engine';
 
+import type { MaybePromise } from '../auth/session-service.ts';
+
 export interface PublicRoundSummary {
   round: 1 | 2 | 3 | 4;
   rankings: readonly {
@@ -36,9 +38,9 @@ export interface StoredGameResult {
 }
 
 export interface ResultStore {
-  save(result: StoredGameResult): void;
-  get(gameId: string): StoredGameResult | null;
-  listForPlayer(playerId: string): readonly StoredGameResult[];
+  save(result: StoredGameResult): MaybePromise<void>;
+  get(gameId: string): MaybePromise<StoredGameResult | null>;
+  listForPlayer(playerId: string): MaybePromise<readonly StoredGameResult[]>;
 }
 
 export class InMemoryResultStore implements ResultStore {
@@ -63,13 +65,13 @@ export class InMemoryResultStore implements ResultStore {
 export class ResultService {
   constructor(private readonly store: ResultStore) {}
 
-  saveFinishedGame(
+  async saveFinishedGame(
     state: GameState,
     roomCode: string,
     finishedAt: Date,
-  ): void {
+  ): Promise<void> {
     if (state.status !== 'FINISHED' || !state.finalStandings) return;
-    this.store.save({
+    await this.store.save({
       gameId: state.gameId,
       roomCode,
       finishedAt: finishedAt.toISOString(),
@@ -96,8 +98,8 @@ export class ResultService {
     });
   }
 
-  getForPlayer(gameId: string, playerId: string) {
-    const result = this.store.get(gameId);
+  async getForPlayer(gameId: string, playerId: string) {
+    const result = await this.store.get(gameId);
     if (!result) throw new Error('GAME_RESULT_NOT_FOUND');
     if (!result.playerIds.includes(playerId)) throw new Error('GAME_RESULT_FORBIDDEN');
     return {
@@ -110,8 +112,8 @@ export class ResultService {
     };
   }
 
-  listForPlayer(playerId: string) {
-    return this.store.listForPlayer(playerId).map((result) => {
+  async listForPlayer(playerId: string) {
+    return (await this.store.listForPlayer(playerId)).map((result) => {
       const standing = result.finalStandings.find((item) => item.playerId === playerId);
       if (!standing) throw new Error(`Result ${result.gameId} is missing player ${playerId}`);
       return {

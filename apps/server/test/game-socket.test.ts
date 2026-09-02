@@ -141,7 +141,7 @@ describe('state synchronization messages', () => {
     connections.add(state.gameId, 'p2', socket);
 
     const { sendCurrentState } = await import('../src/games/socket-route.ts');
-    sendCurrentState(connections, games, state.gameId, 'p2');
+    await sendCurrentState(connections, games, state.gameId, 'p2');
 
     const message = JSON.parse(socket.messages[0] ?? '{}') as { type?: string; state?: { self?: { id?: string } } };
     expect(message.type).toBe('STATE');

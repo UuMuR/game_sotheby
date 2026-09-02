@@ -1,7 +1,7 @@
 # 好友测试环境
 
 1. 创建独立的微信云托管测试环境。
-2. 创建独立 MySQL 和 Redis 实例，执行 `apps/server/src/db/migrations/0001_initial.sql`。
+2. 创建独立 MySQL 和 Redis 实例，设置 `DATABASE_URL` 后执行 `pnpm db:migrate`。
 3. 配置 `DATABASE_URL`、`REDIS_URL`、`WECHAT_APP_ID`、`WECHAT_APP_SECRET`、`SESSION_SECRET`。
 4. 部署 `Dockerfile` 生成的服务端镜像并确认 `/health` 返回 `{ "ok": true }`。
 5. 将 HTTPS/WSS 域名加入微信小程序合法域名列表。

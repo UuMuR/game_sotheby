@@ -50,7 +50,7 @@ export function buildApp(options: BuildAppOptions): FastifyInstance {
     roomLock,
     resultStore,
     ...(deadlineStore === undefined ? {} : { deadlineStore }),
-    roomCodeFor: (roomId) => store.getRoom(roomId)?.code ?? roomId,
+    roomCodeFor: async (roomId) => (await store.getRoom(roomId))?.code ?? roomId,
     onGameFinished: (state) => roomService.markFinished(state.roomId),
   });
   if (options.gameRuntime?.startDeadlineWorker && deadlineStore) {

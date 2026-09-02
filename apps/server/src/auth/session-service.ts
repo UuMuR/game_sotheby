@@ -15,13 +15,15 @@ export interface Session {
   expiresAt: string;
 }
 
+export type MaybePromise<T> = T | Promise<T>;
+
 export interface AuthStore {
-  findPlayerByOpenId(openId: string): PlayerProfile | null;
-  findPlayerById(playerId: string): PlayerProfile | null;
-  savePlayer(player: PlayerProfile): void;
-  findSession(token: string): Session | null;
-  saveSession(session: Session): void;
-  deleteSessionsForPlayer(playerId: string): void;
+  findPlayerByOpenId(openId: string): MaybePromise<PlayerProfile | null>;
+  findPlayerById(playerId: string): MaybePromise<PlayerProfile | null>;
+  savePlayer(player: PlayerProfile): MaybePromise<void>;
+  findSession(token: string): MaybePromise<Session | null>;
+  saveSession(session: Session): MaybePromise<void>;
+  deleteSessionsForPlayer(playerId: string): MaybePromise<void>;
 }
 
 export class InMemoryAuthStore implements AuthStore {
@@ -65,8 +67,8 @@ export class SessionService {
     private readonly idFactory: () => string = randomUUID,
   ) {}
 
-  login(openId: string): { token: string; player: PlayerProfile } {
-    let player = this.store.findPlayerByOpenId(openId);
+  async login(openId: string): Promise<{ token: string; player: PlayerProfile }> {
+    let player = await this.store.findPlayerByOpenId(openId);
     if (!player) {
       player = {
         id: this.idFactory(),
@@ -76,26 +78,26 @@ export class SessionService {
         profileComplete: false,
         deleted: false,
       };
-      this.store.savePlayer(player);
+      await this.store.savePlayer(player);
     }
     const token = this.idFactory();
     const expiresAt = new Date(this.now().getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
-    this.store.saveSession({ token, playerId: player.id, expiresAt });
+    await this.store.saveSession({ token, playerId: player.id, expiresAt });
     return { token, player };
   }
 
-  authenticate(token: string | undefined): PlayerProfile | null {
+  async authenticate(token: string | undefined): Promise<PlayerProfile | null> {
     if (!token) return null;
-    const session = this.store.findSession(token);
+    const session = await this.store.findSession(token);
     if (!session || Date.parse(session.expiresAt) <= this.now().getTime()) return null;
-    const player = this.store.findPlayerById(session.playerId);
+    const player = await this.store.findPlayerById(session.playerId);
     return player?.deleted ? null : player;
   }
 
-  deleteAccount(playerId: string): void {
-    const player = this.store.findPlayerById(playerId);
+  async deleteAccount(playerId: string): Promise<void> {
+    const player = await this.store.findPlayerById(playerId);
     if (!player) throw new Error('PLAYER_NOT_FOUND');
-    this.store.savePlayer({
+    await this.store.savePlayer({
       ...player,
       wechatOpenId: `deleted:${player.id}`,
       nickname: '已注销玩家',
@@ -103,17 +105,17 @@ export class SessionService {
       profileComplete: false,
       deleted: true,
     });
-    this.store.deleteSessionsForPlayer(playerId);
+    await this.store.deleteSessionsForPlayer(playerId);
   }
 
-  updateProfile(playerId: string, nickname: string, avatarUrl: string): PlayerProfile {
-    const player = this.store.findPlayerById(playerId);
+  async updateProfile(playerId: string, nickname: string, avatarUrl: string): Promise<PlayerProfile> {
+    const player = await this.store.findPlayerById(playerId);
     if (!player) throw new Error('PLAYER_NOT_FOUND');
     const trimmed = nickname.trim();
     if (Array.from(trimmed).length < 1 || Array.from(trimmed).length > 12) throw new Error('INVALID_NICKNAME');
     if (/\p{C}/u.test(trimmed)) throw new Error('INVALID_NICKNAME');
     const updated = { ...player, nickname: trimmed, avatarUrl: avatarUrl || '/assets/avatars/default.png', profileComplete: true };
-    this.store.savePlayer(updated);
+    await this.store.savePlayer(updated);
     return updated;
   }
 }
